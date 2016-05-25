@@ -1,0 +1,18 @@
+- hosts: crombeen
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Send magic Wake-On-Lan packet to turn on individual systems
+    wakeonlan:
+      mac: '{{ mac }}'
+      broadcast: 255.255.255.255
+#    delegate_to: localhost
+
+  - name: Wait for the system's WinRM service to come online
+    wait_for:
+      host: '{{ ansible_host }}'
+      port: 5986
+      connect_timeout: 5
+      timeout: 20
+      state: started
+#    delegate_to: localhost

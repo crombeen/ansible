@@ -1,0 +1,4 @@
+- hosts: crombeen
+  tasks:
+  - shell: echo '{{ ansible_date_time.iso8601 }};{{ ansible_hostname }};{{ room }};{{ location }};{{ ansible_fqdn }};{{ ansible_os_name }};{{ ansible_distribution_version }};{{ mac }};{{ ansible_ip_addresses[0] }};{{ ansible_lastboot }}' >>systems.csv
+    connection: local

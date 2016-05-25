@@ -1,0 +1,5 @@
+hosts
+group_vars/crombeen/passwords.yml
+library/
+*.pyc
+*.retry

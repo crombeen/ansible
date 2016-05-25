@@ -1,0 +1,18 @@
+- hosts: crombeen
+  strategy: free
+  tasks:
+  - win_user:
+      fullname: ICT Administrator
+      name: ictadmin
+      description: Used for Ansible automated tasks by the IWT Werkgroep
+#      password: '{{ ictadmin_password }}'
+      groups: Administrators
+      state: present
+
+  - win_user:
+      fullname: Crombeen Leerling
+      name: leerling
+      description: Gedeelde gebruiker door de leerlingen van de Crombeen basisschool
+      groups: Users
+      user_cannot_change_password: yes
+      state: present

@@ -1,0 +1,77 @@
+- hosts: crombeen
+#  strategy: free
+  tasks:
+  - name: Install Chocolatey
+    raw: 'iex ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))'
+    tags: software
+
+  - name: Install software
+    win_chocolatey:
+      name: '{{ item }}'
+      state: present
+    with_items:
+    - 7zip
+#    - adobereader
+#    - adobereader-update
+    - autoruns
+    - chocolateygui
+    - firefox
+    - gimp
+    - googlechrome
+#    - googleearth
+    - inkscape
+    - javaruntime-preventasktoolbar
+    - jre8
+    - libreoffice
+    - notepadplusplus
+    - powershell
+    - procexp
+    - pswindowsupdate
+    - sysinternals
+    - vlc
+    - windbg
+    - windirstat
+    - adblockpluschrome
+    - adblockplusfirefox
+    - adblockplusie
+    tags: software
+
+  - name: Remove software
+    win_chocolatey:
+      name: '{{ item }}'
+      state: absent
+    with_items:
+    - adobeair
+    - adobereader-de
+    - adobeshockwaveplayer
+    - avastbrowsercleanup
+    - avastfreeantivirus
+    - avgantivirusfree
+    - avginternetsecurity
+    - avgpctuneup
+    - avirafreeantivirus
+    - dropbox
+    - flashplayerplugin
+    - flashplayeractivex
+    - openoffice
+    - quicktime
+    tags: software
+
+#  - name: Remove unmanaged software
+#    win_package:
+#      name: '{{ item }}'
+#      state: absent
+#    with_items:
+#    - winzip
+
+#  - name: Disable Windows Features
+#    win_feature:
+#      name: '{{ item }}'
+#      state: absent
+#    with_items:
+#    - Hearts
+#    - Internet-Explorer-Optional-amd64
+
+  - name: Install Windows updates
+    win_updates:
+      state: installed
