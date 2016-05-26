@@ -1,0 +1,14 @@
+[computerlokaal]
+computer1  ansible_host=192.168.1.1  mac=00:CA:FE:BA:BE:01  room=A-0.01  location=computerlokaal
+computer2  ansible_host=192.168.1.2  mac=00:DE:AD:BE:EF:02  room=A-0.02  location=computerlokaal
+
+[klaslokaal]
+computer3  ansible_host=192.168.2.3  mac=00:C0:FF:EE:00:03  room=B-1.03  location=alice
+computer4  ansible_host=192.168.2.4  mac=00:DE:AD:C0:DE:04  room=B-1.04  location=hannah
+
+[andere]
+
+[crombeen:children]
+computerlokaal
+klaslokaal
+andere
