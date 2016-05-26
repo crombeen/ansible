@@ -1,0 +1,6 @@
+- hosts: crombeen
+  gather_facts: no
+  tasks:
+  - name: Turn off computers
+#    raw: Stop-Computer –computer {{ ansible_hostname }} –Credential ictadmin
+    raw: shutdown /s /hybrid /t 15 /c "We are turning computers off after maintenance"
