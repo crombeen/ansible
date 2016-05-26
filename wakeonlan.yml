@@ -13,6 +13,6 @@
       host: '{{ ansible_host }}'
       port: 5986
       connect_timeout: 5
-      timeout: 20
+      timeout: 40
       state: started
 #    delegate_to: localhost
