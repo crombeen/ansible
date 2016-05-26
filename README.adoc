@@ -45,11 +45,11 @@ The following things we can manage using Ansible today:
  - Turning on systems (using Wake-On-Lan)
    * We need fixed IP addresses for this to work out-of-the-box
  - Applying system updates
- - Installing and removing software packages (incl. everything from Ninite)
- - Modifying the start menu
+ - https://chocolatey.org/[Installing and removing software] (incl. everything from Ninite)
  - Enable/disable services
  - Apply/merge registry settings
-   * Change mouse pointer to Extra Large
+   * https://blogs.technet.microsoft.com/heyscriptingguy/2013/01/17/use-powershell-to-change-the-mouse-pointer-scheme/[Change mouse pointer to Extra Large]
+   * http://ccmexec.com/2015/09/customizing-the-windows-10-start-menu-and-add-ie-shortcut-during-osd/[Modifying the start menu]
 
 Still needed to implement:
 
