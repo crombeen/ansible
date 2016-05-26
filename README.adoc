@@ -1,0 +1,123 @@
+= Using Ansible to manage Windows desktops
+
+== Configuring the system for Powershell Remoting
+The following actions have to be taken to enable WinRM Powershell remoting.
+
+=== Enable WinRM
+Start Powershell (Run as Administrator) and run the following command: +WinRM qc+
+
+Answer *yes* on each question asked.
+
+=== Allow Powershell script execution
+Start Powershell (Run as Administrator) and run the following command: +Set-ExecutionPolicy+
+
+Enter the policy to be used: +Bypass+
+
+Answer *yes* when asked to change the policy.
+
+=== Allow Powershell remoting for Ansible
+Start Powershell (Run as Administrator) and run the following command: +ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650+
+
+Enable Wake-on-LAN (WoL)
+
+In order to automatically turn on systems when doing maintenance, we configured the systems to support Wake-on-LAN.
+Most systems are configured this way automatically, however in some cases they need specific changes to make them work as we like.
+
+=== BIOS settings
+Boot the system using the F1 key pressed to enter the BIOS.
+
+Inside the (Lenovo) BIOS go to *Startup > Automatic Boot Sequence* and move the *Network* entries down using the minus key (*-*).
+Ensure that the first entry is the local boot disk.
+
+Save the configuration using the *F10* key and select *Yes*.
+
+=== Windows settings
+No specific configuration is needed to make Wake-on-LAN work on the Lenovo systems in Windows 10.
+
+== Using Ansible
+More information is available from: http://docs.ansible.com/ansible/intro_windows.html
+
+=== Capabilities
+The following things we can manage using Ansible today:
+
+ - Collect information from the system (e.g. Name, MAC address, IP addres, hardware, …)
+   * Creating a CSV file with the required information
+ - Turning on systems (using Wake-On-Lan)
+   * We need fixed IP addresses for this to work out-of-the-box
+ - Applying system updates
+ - Installing and removing software packages (incl. everything from Ninite)
+ - Modifying the start menu
+ - Enable/disable services
+ - Apply/merge registry settings
+   * Change mouse pointer to Extra Large
+
+Still needed to implement:
+
+ * Missing automation
+   - Customize start menu
+   - Customize desktop
+   - Customize task bar
+   - Customize system tray
+   - Customize startup tasks (like autoruns)
+   - Customize services (like autoruns)
+ * Missing facts
+   - DMI information (e.g. Model, Serial number, …)
+   - MAC address
+   - CPU type
+   - Memory
+   - Instructions
+
+
+== Instructions
+Existing Ansible playbooks are available from: https://github.com/crombeen/ansible
+
+=== Turning all desktops on
+    $ ansible-playbook -k -l crombeen wakeonlan.yml
+
+=== Collect information
+    $ ansible-playbook -k -l crombeen collect.yml
+
+=== Manage software
+    $ ansible-playbook -k -l crombeen software.yml
+
+=== Manage users
+    $ ansible-playbook -k -l crombeen users.yml
+
+=== Run everything
+
+    $ ansible-playbook -k -l crombeen site.yml
+
+
+== Problems
+Here is a list of problems today:
+
+ - Often command line systems management was an afterthought in Windows, not designed with it in mind.
+
+ - A lot of (desktop) manipulations require registry edits because out-of-the-box cmdlets do not exist
+
+ - There are almost no desktop-related Ansible modules, Ansible is mostly a server management tool (but does not have to be)
+
+   * Want to clean the desktop, start menu, taskbar or systray ?
+   * Want to modify your mouse pointer or theme ?
+   * Want to clean up startup processes ?
+
+ - Hard to predict how registry modifications will survive Windows 10 updates
+
+ - Powershell is a big improvement over cmd.exe, however it feels like Perl 4 (1993) more than anything modern
+
+ - Microsoft's solution is to use Active Directory and Group Policies, rather than foster community development and open tooling
+
+
+== Resources
+More resources related to Powershell and Ansible-integration below:
+
+=== Ansible
+
+ - http://docs.ansible.com/ansible/intro_windows.html[Ansible Windows support]
+ - http://docs.ansible.com/ansible/list_of_windows_modules.html[Ansible Windows modules]
+ - https://github.com/trondhindenes/Ansible-Auto-Generated-Modules[Powershell DSC modules] - DSC community auto-generated modules
+
+=== Powershell
+
+ - https://developer.rackspace.com/blog/powershell-101-from-a-linux-guy/[Powershell 101 from a Linux guy]
+
