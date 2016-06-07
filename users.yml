@@ -1,6 +1,10 @@
-- hosts: crombeen
-  strategy: free
+- hosts: all
   tasks:
+  - win_group:
+      name: Users
+      description: Local Users
+      state: present
+
   - win_user:
       fullname: ICT Administrator
       name: ictadmin
@@ -15,4 +19,5 @@
       description: Gedeelde gebruiker door de leerlingen van de Crombeen basisschool
       groups: Users
       user_cannot_change_password: yes
+      password_expired: no
       state: present
