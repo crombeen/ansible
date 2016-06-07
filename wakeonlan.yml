@@ -1,11 +1,12 @@
-- hosts: crombeen
+- hosts: all
   gather_facts: no
   connection: local
   tasks:
   - name: Send magic Wake-On-Lan packet to turn on individual systems
     wakeonlan:
       mac: '{{ mac }}'
-      broadcast: 255.255.255.255
+      broadcast: 192.168.0.255
+#      port: 1776
 #    delegate_to: localhost
 
   - name: Wait for the system's WinRM service to come online
