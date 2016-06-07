@@ -40,18 +40,17 @@ More information is available from: http://docs.ansible.com/ansible/intro_window
 === Capabilities
 The following things we can manage using Ansible today:
 
- - Collect information from the system (e.g. Name, MAC address, IP addres, hardware, …)
-   * Creating a CSV file with the required information
  - Turning on systems (using Wake-On-Lan)
-   * We need fixed IP addresses for this to work out-of-the-box
+ - Collect information from the system (e.g. Name, MAC address, IP addres, hardware) into a CSV
  - Applying system updates
  - https://chocolatey.org/[Installing and removing software] (incl. everything from Ninite)
  - Enable/disable services
  - Apply/merge registry settings
    * https://blogs.technet.microsoft.com/heyscriptingguy/2013/01/17/use-powershell-to-change-the-mouse-pointer-scheme/[Change mouse pointer to Extra Large]
    * http://ccmexec.com/2015/09/customizing-the-windows-10-start-menu-and-add-ie-shortcut-during-osd/[Modifying the start menu]
+   * Setting up International(ization) and Keyboard Layout
 
-Still needed to implement:
+Still need to be implement:
 
  * Missing automation
    - Customize start menu
@@ -63,6 +62,7 @@ Still needed to implement:
  * Missing facts
    - DMI information (e.g. Model, Serial number, …)
    - MAC address
+   - Disk information
    - CPU type
    - Memory
    - Instructions
@@ -83,6 +83,9 @@ Existing Ansible playbooks are available from: https://github.com/crombeen/ansib
 === Manage users
     $ ansible-playbook -k -l crombeen users.yml
 
+=== Manage desktop
+    $ ansible-playbook -k -l crombeen desktop.yml
+
 === Run everything
 
     $ ansible-playbook -k -l crombeen site.yml
@@ -94,12 +97,6 @@ Here is a list of problems today:
  - Often command line systems management was an afterthought in Windows, not designed with it in mind.
 
  - A lot of (desktop) manipulations require registry edits because out-of-the-box cmdlets do not exist
-
- - There are almost no desktop-related Ansible modules, Ansible is mostly a server management tool (but does not have to be)
-
-   * Want to clean the desktop, start menu, taskbar or systray ?
-   * Want to modify your mouse pointer or theme ?
-   * Want to clean up startup processes ?
 
  - Hard to predict how registry modifications will survive Windows 10 updates
 
