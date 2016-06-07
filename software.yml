@@ -1,8 +1,9 @@
-- hosts: crombeen
+- hosts: all
 #  strategy: free
   tasks:
   - name: Install Chocolatey
     raw: 'iex ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))'
+    when: ansible_env.ChocolateyInstall is undefined
     tags: software
 
   - name: Install software
@@ -13,6 +14,7 @@
     - 7zip
 #    - adobereader
 #    - adobereader-update
+    - audacity
     - autoruns
     - chocolateygui
     - firefox
@@ -28,12 +30,13 @@
     - procexp
     - pswindowsupdate
     - sysinternals
+    - tipp10
     - vlc
     - windbg
     - windirstat
-    - adblockpluschrome
     - adblockplusfirefox
     - adblockplusie
+    - adblockpluschrome
     tags: software
 
   - name: Remove software
@@ -41,8 +44,8 @@
       name: '{{ item }}'
       state: absent
     with_items:
-    - adobeair
-    - adobereader-de
+#    - adobeair
+#    - adobereader-de
     - adobeshockwaveplayer
     - avastbrowsercleanup
     - avastfreeantivirus
@@ -50,7 +53,7 @@
     - avginternetsecurity
     - avgpctuneup
     - avirafreeantivirus
-    - dropbox
+#    - dropbox
     - flashplayerplugin
     - flashplayeractivex
     - openoffice
