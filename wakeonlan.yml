@@ -2,18 +2,21 @@
   gather_facts: no
   connection: local
   tasks:
+  # TODO: Test wakeonlan module with different UDP ports (e.g. 9 or 0)
+  # TODO: Test wakeonlan module with WoWLAN
   - name: Send magic Wake-On-Lan packet to turn on individual systems
     wakeonlan:
       mac: '{{ mac }}'
-      broadcast: 192.168.0.255
-#      port: 1776
-#    delegate_to: localhost
+      ip: '{{ ansible_host }}'
+#      broadcast: 192.168.0.255
+#      check_arp: no
+#      timeout: 10
+#      port: 9
 
   - name: Wait for the system's WinRM service to come online
     wait_for:
       host: '{{ ansible_host }}'
       port: 5986
       connect_timeout: 5
-      timeout: 40
+      timeout: 30
       state: started
-#    delegate_to: localhost
