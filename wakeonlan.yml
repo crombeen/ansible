@@ -8,7 +8,7 @@
     wakeonlan:
       mac: '{{ mac }}'
       ip: '{{ ansible_host }}'
-#      broadcast: 192.168.0.255
+      broadcast: 192.168.0.255
 #      check_arp: no
 #      timeout: 10
 #      port: 9
