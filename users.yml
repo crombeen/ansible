@@ -10,14 +10,46 @@
       name: ictadmin
       description: Used for Ansible automated tasks by the IWT Werkgroep
 #      password: '{{ ictadmin_password }}'
-      groups: Administrators
+      groups: [ Administrators ]
+      state: present
+
+#- hosts: all:!computerlokaal
+- hosts: computer33
+  tasks:
+  - win_user:
+      fullname: Leerkracht
+      name: leerkracht
+      description: Persoonlijke gebruiker van de leerkracht van basisschool Crombeen
+      account_disabled: no
+      groups: [ Users, Gebruikers ]
+      password_expired: no
       state: present
 
   - win_user:
-      fullname: Crombeen Leerling
       name: leerling
-      description: Gedeelde gebruiker door de leerlingen van de Crombeen basisschool
-      groups: Users
+      state: absent
+
+- hosts: computerlokaal:gang
+  tasks:
+#  - win_user:
+#      name: '{{ item }}'
+#      state: absent
+#    with_items:
+#    - '{{ inventory_hostname }}'
+#    - computer {{ inventory_hostname[-2:] }}
+#    - school{{ inventory_hostname[-1:] }}
+
+  - win_user:
+      name: Administrator
+      account_disabled: yes
+      state: present
+
+  - win_user:
+      fullname: Leerling
+      name: leerling
+      description: Gedeelde gebruiker door de leerlingen van basisschool Crombeen
+      account_disabled: no
+      groups: [ Users, Gebruikers ]
       user_cannot_change_password: yes
       password_expired: no
       state: present
