@@ -49,23 +49,18 @@ The following things we can manage using Ansible today:
    * https://blogs.technet.microsoft.com/heyscriptingguy/2013/01/17/use-powershell-to-change-the-mouse-pointer-scheme/[Change mouse pointer to Extra Large]
    * http://ccmexec.com/2015/09/customizing-the-windows-10-start-menu-and-add-ie-shortcut-during-osd/[Modifying the start menu]
    * Setting up International(ization) and Keyboard Layout
+ - Customize desktop icons
 
 Still need to be implement:
 
  * Missing automation
    - Customize start menu
-   - Customize desktop
    - Customize task bar
    - Customize system tray
    - Customize startup tasks (like autoruns)
    - Customize services (like autoruns)
  * Missing facts
-   - DMI information (e.g. Model, Serial number, …)
-   - MAC address
-   - Disk information
-   - CPU type
-   - Memory
-   - Instructions
+   - Disk information (size, free-space)
 
 
 == Instructions
@@ -79,6 +74,7 @@ Existing Ansible playbooks are available from: https://github.com/crombeen/ansib
 
 === Manage software
     $ ansible-playbook -k -l crombeen software.yml
+    $ ansible-playbook -k -l crombeen cleanup.yml
 
 === Manage users
     $ ansible-playbook -k -l crombeen users.yml

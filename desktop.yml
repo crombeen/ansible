@@ -1,0 +1,72 @@
+- hosts: all
+  vars:
+    program_files: '{{ ansible_env["ProgramFiles"] }}'
+    user_directory:
+  tasks:
+  - name: On 64bit we would like to use the 32bit directory
+    set_fact:
+      program_files: '{{ ansible_env["ProgramFiles(x86)"] }}'
+    when: ansible_env["ProgramFiles(x86)"] is defined
+
+  - name: Remove unwanted desktop icons
+    win_shortcut:
+      dest: '{{ item }}'
+      state: absent
+    with_items:
+#    - 'C:\Users\leerling\Desktop\Computermeester.lnk'
+#    - 'C:\Users\leerling\Desktop\Computermeester.url'
+#    - 'C:\Users\leerling Crombeen\Desktop\Computermeester.url'
+    - 'C:\Users\leerling\Desktop\WinDirStat.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\CDex.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\Google Chrome.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\Google Earth.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\Inkscape.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\InfraRecorder.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\LibreOffice 5.2.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\Mozilla Firefox.lnk'
+    - '{{ ansible_env.PUBLIC }}\Desktop\VLC media player.lnk'
+
+  - name: Add Computermeester.be website shortcut
+    win_shortcut:
+      desc: Computer Meester website
+      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
+      dest: '{{ ansible_env.PUBLIC }}\Desktop\Computer Meester.lnk'
+      args: '--new-window http://computermeester.be/'
+      directory: '{{ program_files }}\Google\Chrome\Application'
+      icon: 'C:\WINDOWS\system32\imageres.dll,124'
+      state: present
+
+  - name: Add Bingel website shortcut
+    win_shortcut:
+      desc: Bingel website
+      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
+      dest: '{{ ansible_env.PUBLIC }}\Desktop\Bingel.lnk'
+      args: '--new-window https://www.bingel.be/bingel/'
+      directory: '{{ program_files }}\Google\Chrome\Application'
+      icon: 'C:\WINDOWS\system32\imageres.dll,65'
+      state: present
+
+  - name: Set default system locale to nl-BE
+    raw: Set-WinSystemLocale nl-BE
+
+  - name: Set user language setting to nl-BE
+    raw: Set-WinUserLanguageList -LanguageList nl-BE -Force
+
+# FIXME: This does not seem to work
+#
+#  - raw: Get-AppxPackage *3d* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *camera* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *communi* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *bing* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *zune* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *people* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *phone* | Remove-AppxPack
+#  - raw: Get-AppxPackage *photo* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *solit* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *soundrec* | Remove-AppxPackage
+#  - raw: Get-AppxPackage *xbox* | Remove-AppxPackage
+#  - raw: powercfg -change -standby-timeout-ac 60
+#  - raw: powercfg -change -monitor-timeout-ac 15
+#  - raw: >
+#      $e = (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}')
+#      $e.Items() | %{$_.Verbs()} | ?{$_.Name.replace('&','') -match 'Unpin from Start'} | %{$_.DoIt()}

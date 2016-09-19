@@ -1,0 +1,89 @@
+- hosts: all
+  tasks:
+  - name: Remove unwanted software using Chocolatey
+    win_chocolatey:
+      name: '{{ item }}'
+      state: absent
+    with_items:
+#    - adobeair
+#    - adobereader-de
+    - adobeshockwaveplayer
+    - avastbrowsercleanup
+    - avastfreeantivirus
+    - avgantivirusfree
+    - avginternetsecurity
+    - avgpctuneup
+    - avirafreeantivirus
+#    - dropbox
+    - flashplayerplugin
+    - flashplayeractivex
+    - openoffice
+    - quicktime
+    - windbg
+    tags: software
+
+# FIXME: This doesn't work
+#
+#- hosts: computerlokaal
+#  tasks:
+#  - name: Remove software
+#    raw: $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"; $app.Uninstall();
+#    with_items:
+#    - Adobe AIR
+#    - Acrobat Reader X
+#    - Lenovo Solution Center
+#    - SDK Debuggers
+
+#  - name: Remove unmanaged software
+#    win_package:
+#      name: '{{ item }}'
+#      state: absent
+#    with_items:
+#    - winzip
+
+#  - name: Disable Windows Features
+#    win_feature:
+#      name: '{{ item }}'
+#      state: absent
+#    with_items:
+#    - Hearts
+#    - Internet-Explorer-Optional-amd64
+
+# - hosts: all
+#   tasks:
+#  - raw: 'Get-AppxPackage Microsoft.WindowsAlarms*'
+#  - raw: "Get-AppxPackage {{ item }} | Remove-AppxPackage"
+#    with_items:
+#     - Microsoft.WindowsAlarms
+#     - Microsoft.People
+#     - Microsoft.ConnectivityStore
+#     - Microsoft.WindowsStore
+#     - Microsoft.XboxApp
+#     - E046963F.LenovoCompanion
+#     - Microsoft.WindowsMaps
+#     - Microsoft.ZuneVideo
+#     - Microsoft.3DBuilder
+#     - Microsoft.Office.Sway
+#     - Microsoft.WindowsCamera
+#     - Microsoft.ZuneMusic
+#     - Microsoft.windowscommunicationsapps
+#     - Microsoft.CommsPhone
+#     - Microsoft.Windows.Photos
+#     - Microsoft.BingFinance
+#     - Microsoft.BingNews
+#     - Microsoft.MicrosoftSolitaireCollection
+#     - Microsoft.BingSports
+#     - Microsoft.BingWeather
+#     - *CandyCrush*
+
+#   - script: files/RemoveAppxPackages1.ps1
+ 
+#   - script: files/RemoveAppxPackages.ps1
+ 
+ #  - win_software:
+ #      state: list
+ #      name: Null
+ 
+ #  - win_software:
+ #      name: Lytro Desktop
+ #      state: absent
