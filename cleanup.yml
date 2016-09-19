@@ -5,8 +5,10 @@
       name: '{{ item }}'
       state: absent
     with_items:
-#    - adobeair
+    - adobeair
 #    - adobereader-de
+#    - adobereader
+#    - adobereader-update
     - adobeshockwaveplayer
     - avastbrowsercleanup
     - avastfreeantivirus
@@ -21,6 +23,16 @@
     - quicktime
     - windbg
     tags: software
+
+- hosts: computerlokaal
+  tasks:
+ - name: Remove software
+    raw: $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"; $app.Uninstall();
+    with_items:
+    - Adobe AIR
+    - Acrobat Reader X
+    - Lenovo Solution Center
+    - SDK Debuggers
 
 # FIXME: This doesn't work
 #
