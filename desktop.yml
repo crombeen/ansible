@@ -69,6 +69,11 @@
     - { desc: Prullenbak,      dest: '{{ ansible_env.PUBLIC }}\Desktop\Prullenbak.lnk', src: 'shell:RecycleBinFolder' }
     tags: [ icons ]
 
+  - name: Move files on Desktop to Documents
+#    win_command: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
+#    become_user: leerling
+    win_command: Move-Item C:\Users\leerling\Desktop\*.* C:\users\leerling\Documents\ -Force
+
   - name: Add network shares for user ictadmin
     win_shortcut:
       desc: '{{ item.desc }}'
@@ -103,9 +108,6 @@
     - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguages, data: 'nl-BE', type: multistring }
     - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguagesPending, data: 'nl-BE', type: multistring }
     tags: [ bg, registry ]
-
-  - name: Move files on Desktop to Documents
-    win_command: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
 
 # FIXME: This does not seem to work
 #
