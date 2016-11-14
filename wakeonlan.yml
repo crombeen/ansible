@@ -6,8 +6,9 @@
   # TODO: Test wakeonlan module with WoWLAN
   - name: Send magic Wake-On-Lan packet to turn on individual systems
     wakeonlan:
+#    wakeonlan-adv:
       mac: '{{ mac }}'
-      ip: '{{ ansible_host }}'
+#      ip: '{{ ansible_host }}'
       broadcast: 192.168.0.255
 #      check_arp: no
 #      timeout: 10
