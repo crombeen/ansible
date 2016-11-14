@@ -15,6 +15,8 @@ Enter the policy to be used: +Bypass+
 
 Answer *yes* when asked to change the policy.
 
+(Or use proper client certificates, which we plan to do)
+
 === Allow Powershell remoting for Ansible
 Start Powershell (Run as Administrator) and run the following command: +ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650+
 
@@ -40,9 +42,9 @@ More information is available from: http://docs.ansible.com/ansible/intro_window
 === Capabilities
 The following things we can manage using Ansible today:
 
- - Turning on systems (using Wake-On-Lan)
+ - Turn on systems (using Wake-On-Lan)
  - Collect information from the system (e.g. Name, MAC address, IP addres, hardware) into a CSV
- - Applying system updates
+ - Apply system updates
  - https://chocolatey.org/[Installing and removing software] (incl. everything from Ninite)
  - Enable/disable services
  - Apply/merge registry settings
@@ -98,7 +100,7 @@ Here is a list of problems today:
 
  - Powershell is a big improvement over cmd.exe, however it feels like Perl 4 (1993) more than anything modern
 
- - Microsoft's solution is to use Active Directory and Group Policies, rather than foster community development and open tooling
+ - Since we have Windows 10 Home OEM licenses, Microsoft's solution (Active Directory and Group Policies) is not an option, and we prefer open tooling and manageable actions
 
 
 == Resources
