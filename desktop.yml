@@ -2,11 +2,13 @@
   vars:
     program_files: '{{ ansible_env["ProgramFiles"] }}'
     user_directory:
+
   tasks:
   - name: On 64bit we would like to use the 32bit directory
     set_fact:
       program_files: '{{ ansible_env["ProgramFiles(x86)"] }}'
     when: ansible_env["ProgramFiles(x86)"] is defined
+    tags: [ icons ]
 
   - name: Remove unwanted desktop icons
     win_shortcut:
@@ -26,31 +28,84 @@
     - '{{ ansible_env.PUBLIC }}\Desktop\Mozilla Firefox.lnk'
     - '{{ ansible_env.PUBLIC }}\Desktop\VLC media player.lnk'
 
-  - name: Add Computermeester.be website shortcut
+  - name: Add default desktop icons
     win_shortcut:
-      desc: Computer Meester website
-      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
+      desc: '{{ item.desc }}'
+      src: '{{ item.src }}'
+      dest: '{{ item.dest }}'
+      args: '{{ item.args | default(none) }}'
+      directory: '{{ item.directory | default(none) }}'
+      icon: '{{ item.icon | default(none) }}'
+      state: present
+    with_items:
+    - desc: Computer Meester website
       dest: '{{ ansible_env.PUBLIC }}\Desktop\Computer Meester.lnk'
+      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
       args: '--new-window http://computermeester.be/'
       directory: '{{ program_files }}\Google\Chrome\Application'
       icon: 'C:\WINDOWS\system32\imageres.dll,124'
-      state: present
-
-  - name: Add Bingel website shortcut
-    win_shortcut:
-      desc: Bingel website
-      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
+    - desc: Bingel website
       dest: '{{ ansible_env.PUBLIC }}\Desktop\Bingel.lnk'
+      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
       args: '--new-window https://www.bingel.be/bingel/'
       directory: '{{ program_files }}\Google\Chrome\Application'
       icon: 'C:\WINDOWS\system32\imageres.dll,65'
+    - desc: Symbaloo website
+      dest: '{{ ansible_env.PUBLIC }}\Desktop\Symbaloo.lnk'
+      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
+      args: '--new-window https://www.symbaloo.com/'
+      directory: '{{ program_files }}\Google\Chrome\Application'
+      icon: 'C:\WINDOWS\system32\imageres.dll,106'
+    tags: [ icons ]
+
+  - name: Add default desktop icons
+    win_shortcut:
+      desc: '{{ item.desc }}'
+      src: '{{ item.src }}'
+      dest: '{{ item.dest }}'
       state: present
+    with_items:
+    - { desc: Mijn Documenten, dest: '{{ ansible_env.PUBLIC }}\Desktop\Documenten.lnk', src: '%userprofile%\Documents' }
+    - { desc: Prullenbak,      dest: '{{ ansible_env.PUBLIC }}\Desktop\Prullenbak.lnk', src: 'shell:RecycleBinFolder' }
+    tags: [ icons ]
+
+  - name: Add network shares for user ictadmin
+    win_shortcut:
+      desc: '{{ item.desc }}'
+      src: '{{ item.src }}'
+      dest: '{{ item.dest }}'
+      state: present
+    with_items:
+    - { desc: Netwerk \\diskstation01\ictadmin, dest: 'Desktop\ictadmin (I).lnk', src: 'I:\' }
+    - { desc: Netwerk \\diskstation01\music,    dest: 'Desktop\music (M).lnk',    src: 'M:\' }
+    - { desc: Netwerk \\diskstation01\video,    dest: 'Desktop\video (V).lnk',    src: 'V:\' }
+    - { desc: Netwerk \\diskstation01\photo,    dest: 'Desktop\photo (P).lnk',    src: 'P:\' }
+    - { desc: Netwerk \\diskstation01\bordboek, dest: 'Desktop\bordboek (B).lnk', src: 'B:\' }
+    - { desc: Netwerk \\diskstation01\games,    dest: 'Desktop\games (G).lnk',    src: 'G:\' }
+    tags: [ icons, shares ]
 
   - name: Set default system locale to nl-BE
     raw: Set-WinSystemLocale nl-BE
 
   - name: Set user language setting to nl-BE
     raw: Set-WinUserLanguageList -LanguageList nl-BE -Force
+
+  - name: Set red background for user ictadmin
+    win_regedit:
+      key: '{{ item.key }}'
+      value: '{{ item.value }}'
+      data: '{{ item.data }}'
+      datatype: '{{ item.type }}'
+    with_items:
+    - { key: 'HKCU:\Control Panel\Desktop', value: Wallpaper, data: '', type: string }
+    - { key: 'HKCU:\Control Panel\Desktop', value: WallpaperStyle, data: 10, type: string }
+    - { key: 'HKCU:\Control Panel\Colors', value: Background, data: '232 17 35', type: string }
+    - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguages, data: 'nl-BE', type: multistring }
+    - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguagesPending, data: 'nl-BE', type: multistring }
+    tags: [ bg, registry ]
+
+  - name: Move files on Desktop to Documents
+    win_command: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
 
 # FIXME: This does not seem to work
 #
