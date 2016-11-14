@@ -4,7 +4,7 @@
     ignore_errors: yes
 
   - set_fact:
-      csv_entry: '{{ ansible_date_time.date }} {{ ansible_date_time.time }};{{ ansible_hostname }};{{ ansible_system_description }};{{ ansible_fqdn }};{{ ansible_os_name }};{{ ansible_distribution_version }};{{ mac }};{{ ansible_ip_addresses[0] }};{{ ansible_processor[1] }};{{ (ansible_memtotal_mb/1024)|round|int }}GB;{{ ansible_product_version }};"{{ ansible_system_vendor }}";{{ ansible_product_name }};{{ ansible_product_serial }};{{ ansible_lastboot }}'
+      csv_entry: '{{ ansible_date_time.date }} {{ ansible_date_time.time }};{{ ansible_hostname }};{{ ansible_system_description }};{{ ansible_fqdn }};{{ ansible_os_name }};{{ ansible_distribution_version }};{{ ansible_architecture }};{{ mac }};{{ ansible_ip_addresses[0] }};{{ ansible_processor[1] }};{{ (ansible_memtotal_mb/1024)|round|int }}GB;{{ ansible_product_version }};"{{ ansible_system_vendor }}";{{ ansible_product_name }};{{ ansible_product_serial }};{{ ansible_lastboot }}'
 
 - hosts: all
   serial: 1
