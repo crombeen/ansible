@@ -1,11 +1,13 @@
 - hosts: all
   tasks:
-  - win_group:
+  - name: Create local "Users" group
+    win_group:
       name: Users
       description: Local Users
       state: present
 
-  - win_user:
+  - name: Create local "ictadmin" user
+    win_user:
       fullname: ICT Administrator
       name: ictadmin
       description: Used for Ansible automated tasks by the IWT Werkgroep
@@ -16,7 +18,8 @@
 #- hosts: all:!computerlokaal
 - hosts: computer33
   tasks:
-  - win_user:
+  - name: Create local "leerkracht" user
+    win_user:
       fullname: Leerkracht
       name: leerkracht
       description: Persoonlijke gebruiker van de leerkracht van basisschool Crombeen
@@ -25,7 +28,8 @@
       password_expired: no
       state: present
 
-  - win_user:
+  - name: Remove local "leerling" user
+    win_user:
       name: leerling
       state: absent
 
@@ -39,17 +43,22 @@
 #    - computer {{ inventory_hostname[-2:] }}
 #    - school{{ inventory_hostname[-1:] }}
 
-  - win_user:
+  - name: Disable local "Administrator" user
+    win_user:
       name: Administrator
       account_disabled: yes
       state: present
 
-  - win_user:
+  - name: Create local "leerling" user
+    win_user:
       fullname: Leerling
       name: leerling
+#      password: ''
       description: Gedeelde gebruiker door de leerlingen van basisschool Crombeen
       account_disabled: no
-      groups: [ Users, Gebruikers ]
+      account_locked: no
+      groups: [ Users ]
       user_cannot_change_password: yes
       password_expired: no
+      password_never_expires: no
       state: present
