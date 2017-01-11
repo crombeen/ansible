@@ -22,56 +22,83 @@
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
 $params = Parse-Args $args;
-$src = Get-Attr $params "src" $null;
-$dest = Get-Attr $params "dest" $null;
-$state = Get-Attr $params "state" "present";
-$args = Get-Attr $params "args" $null;
-$directory = Get-Attr $params "directory" $null;
-$hotkey = Get-Attr $params "hotkey" $null;
-$icon = Get-Attr $params "icon" $null;
-$desc = Get-Attr $params "desc" $null;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$src = Get-AnsibleParam -obj $params -name "src"
+$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $True
+$state = Get-AnsibleParam -obj $params -name "state" -default "present"
+$args = Get-AnsibleParam -obj $params -name "args" -default $Null
+$directory = Get-AnsibleParam -obj $params -name "directory" -default $Null
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -default $Null
+$icon = Get-AnsibleParam -obj $params -name "icon" -default $Null
+$desc = Get-AnsibleParam -obj $params -name "desc" -default $Null
 
-if ($state -eq "absent") {
-    Remove-Item -Path "$dest";
-    if ($? -eq $true) {
-        Set-Attr $result "changed" $true;
+$result = New-Object PSObject @{
+    changed = $False
+}
+
+If ($state -Eq "absent") {
+    If (Test-Path "$dest") {
+        # If the shortcut exists, try to remove it
+        Remove-Item -Path "$dest";
+        If ($? -Eq $True) {
+            # Report removal success
+            Set-Attr $result "changed" $True
+        } Else {
+            # Report removal failure
+            Fail-Json $result "Removing file $dest failed."
+        }
+    } Else {
+        # Nothing to report, everything is fine already
     }
-} elseif ($state -eq "present") {
-    $Shell = New-Object -ComObject ("WScript.Shell");
-    #$ShortCut = $Shell.CreateShortcut($env:USERPROFILE + "\Desktop\Your Shortcut.lnk")
-    $ShortCut = $Shell.CreateShortcut($dest);
-    $ShortCut.TargetPath = $src;
-#    $ShortCut.WindowStyle = 1;
+} ElseIf ($state -Eq "present") {
+    $Shell = New-Object -ComObject ("WScript.Shell")
+    $ShortCut = $Shell.CreateShortcut($dest)
 
-    if ($args -ne $null) {
-        $ShortCut.Arguments = $args;
+#    $ShortCut.WindowStyle = 1
+
+    # Compare existing values with new values,
+    # report as changed if required
+
+    # FIXME: Does not work for e.g. %userprofile%\Documents
+    If ($ShortCut.TargetPath -Ne $src) {
+        Set-Attr $result "changed" $True
+        $ShortCut.TargetPath = $src
     }
 
-    if ($directory -ne $null) {
-        $ShortCut.WorkingDirectory = $directory;
+    If ($args -Ne $Null -And $ShortCut.Arguments -Ne $args) {
+        Set-Attr $result "changed" $True
+        $ShortCut.Arguments = $args
     }
 
-    if ($hotkey -ne $null) {
-        $ShortCut.Hotkey = $hotkey;
+    If ($directory -Ne $Null -And $ShortCut.WorkingDirectory -Ne $directory) {
+        Set-Attr $result "changed" $True
+        $ShortCut.WorkingDirectory = $directory
     }
 
-    if ($icon -ne $null) {
-        $ShortCut.IconLocation = $icon;
+    If ($hotkey -Ne $Null -And $ShortCut.Hotkey -Ne $hotkey) {
+        Set-Attr $result "changed" $True
+        $ShortCut.Hotkey = $hotkey
     }
 
-    if ($desc -ne $null) {
-        $ShortCut.Description = $desc;
+    If ($icon -Ne $Null -And $ShortCut.IconLocation -Ne $icon) {
+        Set-Attr $result "changed" $True
+        $ShortCut.IconLocation = $icon
     }
 
-    $ShortCut.Save()
-    Set-Attr $result "changed" $true;
+    If ($desc -Ne $Null -And $ShortCut.Description -Ne $desc) {
+        Set-Attr $result "changed" $True
+        $ShortCut.Description = $desc
+    }
+
+    If ($result["changed"] -Eq $True) {
+        $ShortCut.Save()
+        If ($? -Ne $True) {
+            Fail-Json $result "Failed to create shortcut at $dest"
+        }
+    }
 
 } else {
-    Set-Attr $result "msg" "Parameter 'state' is either 'present' or 'absent'.";
-    Set-Attr $result "failed" $true;
+    Fail-Json $result "Option 'state' must be either 'present' or 'absent'."
 }
 
 Exit-Json $result
