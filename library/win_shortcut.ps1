@@ -27,14 +27,14 @@ $params = Parse-Args $args -supports_check_mode $true;
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $orig_src = Get-AnsibleParam -obj $params -name "src"
-$orig_dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $True
+$orig_dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -default "present"
-$orig_args = Get-AnsibleParam -obj $params -name "args" -default $Null
-$orig_directory = Get-AnsibleParam -obj $params -name "directory" -default $Null
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -default $Null
-$orig_icon = Get-AnsibleParam -obj $params -name "icon" -default $Null
-$orig_description = Get-AnsibleParam -obj $params -name "description" -default $Null
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -default $Null
+$orig_args = Get-AnsibleParam -obj $params -name "args" -default $null
+$orig_directory = Get-AnsibleParam -obj $params -name "directory" -default $null
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -default $null
+$orig_icon = Get-AnsibleParam -obj $params -name "icon" -default $null
+$orig_description = Get-AnsibleParam -obj $params -name "description" -default $null
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -default $null
 
 # Expand environment variables
 $src = [System.Environment]::ExpandEnvironmentVariables($orig_src)
@@ -45,18 +45,18 @@ $icon = [System.Environment]::ExpandEnvironmentVariables($orig_icon)
 $description = [System.Environment]::ExpandEnvironmentVariables($orig_description)
 
 $result = New-Object PSObject @{
-    changed = $False
+    changed = $false
     dest = $dest
     state = $state
 }
 
-If ($state -Eq "absent") {
+If ($state -eq "absent") {
     If (Test-Path "$dest") {
         # If the shortcut exists, try to remove it
         Remove-Item -Path "$dest";
-        If ($? -Eq $True) {
+        If ($? -eq $true) {
             # Report removal success
-            Set-Attr $result "changed" $True
+            Set-Attr $result "changed" $true
         } Else {
             # Report removal failure
             Fail-Json $result "Removing file $dest failed."
@@ -64,72 +64,72 @@ If ($state -Eq "absent") {
     } Else {
         # Nothing to report, everything is fine already
     }
-} ElseIf ($state -Eq "present") {
+} ElseIf ($state -eq "present") {
     $Shell = New-Object -ComObject ("WScript.Shell")
     $ShortCut = $Shell.CreateShortcut($dest)
 
     # Compare existing values with new values,
     # report as changed if required
 
-    If ($orig_src -Ne $Null -And $ShortCut.TargetPath -Ne $src) {
-        Set-Attr $result "changed" $True
+    If ($orig_src -ne $null -and $ShortCut.TargetPath -ne $src) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "src" $src
         $ShortCut.TargetPath = $src
     } Else {
         Set-Attr $result "src" $ShortCut.TargetPath
     }
 
-    If ($orig_args -Ne $Null -And $ShortCut.Arguments -Ne $args) {
-        Set-Attr $result "changed" $True
+    If ($orig_args -ne $null -and $ShortCut.Arguments -ne $args) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "args" $args
         $ShortCut.Arguments = $args
     } Else {
         Set-Attr $result "args" $ShortCut.Arguments
     }
 
-    If ($orig_directory -Ne $Null -And $ShortCut.WorkingDirectory -Ne $directory) {
-        Set-Attr $result "changed" $True
+    If ($orig_directory -ne $null -and $ShortCut.WorkingDirectory -ne $directory) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "directory" $directory
         $ShortCut.WorkingDirectory = $directory
     } Else {
         Set-Attr $result "directory" $ShortCut.WorkingDirectory
     }
 
-    If ($hotkey -Ne $Null -And $ShortCut.Hotkey -Ne $hotkey) {
-        Set-Attr $result "changed" $True
+    If ($hotkey -ne $null -and $ShortCut.Hotkey -ne $hotkey) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "hotkey" $hotkey
         $ShortCut.Hotkey = $hotkey
     } Else {
         Set-Attr $result "hotkey" $ShortCut.Hotkey
     }
 
-    If ($orig_icon -Ne $Null -And $ShortCut.IconLocation -Ne $icon) {
-        Set-Attr $result "changed" $True
+    If ($orig_icon -ne $null -and $ShortCut.IconLocation -ne $icon) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "icon" $icon
         $ShortCut.IconLocation = $icon
     } Else {
         Set-Attr $result "icon" $ShortCut.IconLocation
     }
 
-    If ($orig_description -Ne $Null -And $ShortCut.Description -Ne $description) {
-        Set-Attr $result "changed" $True
+    If ($orig_description -ne $null -and $ShortCut.Description -ne $description) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "description" $description
         $ShortCut.Description = $description
     } Else {
         Set-Attr $result "description" $ShortCut.Description
     }
 
-    If ($windowstyle -Ne $Null -And $ShortCut.WindowStyle -Ne $windowstyle) {
-        Set-Attr $result "changed" $True
+    If ($windowstyle -ne $null -and $ShortCut.WindowStyle -ne $windowstyle) {
+        Set-Attr $result "changed" $true
         Set-Attr $result "windowstyle" $windowstyle
         $ShortCut.WindowStyle = $windowstyle
     } Else {
         Set-Attr $result "windowstyle" $ShortCut.WindowStyle
     }
 
-    If ($result["changed"] -Eq $True -And $_ansible_check_mode -Ne $True) {
+    If ($result["changed"] -eq $true -and $_ansible_check_mode -ne $True) {
         $ShortCut.Save()
-        If ($? -Ne $True) {
+        If ($? -ne $true) {
             Fail-Json $result "Failed to create shortcut at $dest"
         }
     }
