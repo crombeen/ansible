@@ -74,7 +74,6 @@ If ($state -Eq "absent") {
     If ($orig_src -Ne $Null -And $ShortCut.TargetPath -Ne $src) {
         Set-Attr $result "changed" $True
         Set-Attr $result "src" $src
-        Set-Attr $result "msg" "src was changed"
         $ShortCut.TargetPath = $src
     } Else {
         Set-Attr $result "src" $ShortCut.TargetPath
@@ -83,7 +82,6 @@ If ($state -Eq "absent") {
     If ($orig_args -Ne $Null -And $ShortCut.Arguments -Ne $args) {
         Set-Attr $result "changed" $True
         Set-Attr $result "args" $args
-        Set-Attr $result "msg" "args was changed"
         $ShortCut.Arguments = $args
     } Else {
         Set-Attr $result "args" $ShortCut.Arguments
@@ -92,7 +90,6 @@ If ($state -Eq "absent") {
     If ($orig_directory -Ne $Null -And $ShortCut.WorkingDirectory -Ne $directory) {
         Set-Attr $result "changed" $True
         Set-Attr $result "directory" $directory
-        Set-Attr $result "msg" "directory was changed"
         $ShortCut.WorkingDirectory = $directory
     } Else {
         Set-Attr $result "directory" $ShortCut.WorkingDirectory
@@ -101,7 +98,6 @@ If ($state -Eq "absent") {
     If ($hotkey -Ne $Null -And $ShortCut.Hotkey -Ne $hotkey) {
         Set-Attr $result "changed" $True
         Set-Attr $result "hotkey" $hotkey
-        Set-Attr $result "msg" "hotkey was changed"
         $ShortCut.Hotkey = $hotkey
     } Else {
         Set-Attr $result "hotkey" $ShortCut.Hotkey
@@ -110,7 +106,6 @@ If ($state -Eq "absent") {
     If ($orig_icon -Ne $Null -And $ShortCut.IconLocation -Ne $icon) {
         Set-Attr $result "changed" $True
         Set-Attr $result "icon" $icon
-        Set-Attr $result "msg" ("icon was changed (old: " + $ShortCut.IconLocation + ", new: $icon")
         $ShortCut.IconLocation = $icon
     } Else {
         Set-Attr $result "icon" $ShortCut.IconLocation
@@ -119,7 +114,6 @@ If ($state -Eq "absent") {
     If ($orig_description -Ne $Null -And $ShortCut.Description -Ne $description) {
         Set-Attr $result "changed" $True
         Set-Attr $result "description" $description
-        Set-Attr $result "msg" "description was changed"
         $ShortCut.Description = $description
     } Else {
         Set-Attr $result "description" $ShortCut.Description
@@ -128,7 +122,6 @@ If ($state -Eq "absent") {
     If ($windowstyle -Ne $Null -And $ShortCut.WindowStyle -Ne $windowstyle) {
         Set-Attr $result "changed" $True
         Set-Attr $result "windowstyle" $windowstyle
-        Set-Attr $result "msg" "windowstyle was changed"
         $ShortCut.WindowStyle = $windowstyle
     } Else {
         Set-Attr $result "windowstyle" $ShortCut.WindowStyle
