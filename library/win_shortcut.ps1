@@ -21,19 +21,33 @@
 #
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true;
 
-$src = Get-AnsibleParam -obj $params -name "src"
-$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $True
+# TODO: Check-mode for Windows modules does not seem supported (yet) ?
+$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+
+$orig_src = Get-AnsibleParam -obj $params -name "src"
+$orig_dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $True
 $state = Get-AnsibleParam -obj $params -name "state" -default "present"
-$args = Get-AnsibleParam -obj $params -name "args" -default $Null
-$directory = Get-AnsibleParam -obj $params -name "directory" -default $Null
+$orig_args = Get-AnsibleParam -obj $params -name "args" -default $Null
+$orig_directory = Get-AnsibleParam -obj $params -name "directory" -default $Null
 $hotkey = Get-AnsibleParam -obj $params -name "hotkey" -default $Null
-$icon = Get-AnsibleParam -obj $params -name "icon" -default $Null
-$desc = Get-AnsibleParam -obj $params -name "desc" -default $Null
+$orig_icon = Get-AnsibleParam -obj $params -name "icon" -default $Null
+$orig_description = Get-AnsibleParam -obj $params -name "description" -default $Null
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -default $Null
+
+# Expand environment variables
+$src = [System.Environment]::ExpandEnvironmentVariables($orig_src)
+$dest = [System.Environment]::ExpandEnvironmentVariables($orig_dest)
+$args = [System.Environment]::ExpandEnvironmentVariables($orig_args)
+$directory = [System.Environment]::ExpandEnvironmentVariables($orig_directory)
+$icon = [System.Environment]::ExpandEnvironmentVariables($orig_icon)
+$description = [System.Environment]::ExpandEnvironmentVariables($orig_description)
 
 $result = New-Object PSObject @{
     changed = $False
+    dest = $dest
+    state = $state
 }
 
 If ($state -Eq "absent") {
@@ -54,43 +68,73 @@ If ($state -Eq "absent") {
     $Shell = New-Object -ComObject ("WScript.Shell")
     $ShortCut = $Shell.CreateShortcut($dest)
 
-#    $ShortCut.WindowStyle = 1
-
     # Compare existing values with new values,
     # report as changed if required
 
-    # FIXME: Does not work for e.g. %userprofile%\Documents
-    If ($ShortCut.TargetPath -Ne $src) {
+    If ($orig_src -Ne $Null -And $ShortCut.TargetPath -Ne $src) {
         Set-Attr $result "changed" $True
+        Set-Attr $result "src" $src
+        Set-Attr $result "msg" "src was changed"
         $ShortCut.TargetPath = $src
+    } Else {
+        Set-Attr $result "src" $ShortCut.TargetPath
     }
 
-    If ($args -Ne $Null -And $ShortCut.Arguments -Ne $args) {
+    If ($orig_args -Ne $Null -And $ShortCut.Arguments -Ne $args) {
         Set-Attr $result "changed" $True
+        Set-Attr $result "args" $args
+        Set-Attr $result "msg" "args was changed"
         $ShortCut.Arguments = $args
+    } Else {
+        Set-Attr $result "args" $ShortCut.Arguments
     }
 
-    If ($directory -Ne $Null -And $ShortCut.WorkingDirectory -Ne $directory) {
+    If ($orig_directory -Ne $Null -And $ShortCut.WorkingDirectory -Ne $directory) {
         Set-Attr $result "changed" $True
+        Set-Attr $result "directory" $directory
+        Set-Attr $result "msg" "directory was changed"
         $ShortCut.WorkingDirectory = $directory
+    } Else {
+        Set-Attr $result "directory" $ShortCut.WorkingDirectory
     }
 
     If ($hotkey -Ne $Null -And $ShortCut.Hotkey -Ne $hotkey) {
         Set-Attr $result "changed" $True
+        Set-Attr $result "hotkey" $hotkey
+        Set-Attr $result "msg" "hotkey was changed"
         $ShortCut.Hotkey = $hotkey
+    } Else {
+        Set-Attr $result "hotkey" $ShortCut.Hotkey
     }
 
-    If ($icon -Ne $Null -And $ShortCut.IconLocation -Ne $icon) {
+    If ($orig_icon -Ne $Null -And $ShortCut.IconLocation -Ne $icon) {
         Set-Attr $result "changed" $True
+        Set-Attr $result "icon" $icon
+        Set-Attr $result "msg" ("icon was changed (old: " + $ShortCut.IconLocation + ", new: $icon")
         $ShortCut.IconLocation = $icon
+    } Else {
+        Set-Attr $result "icon" $ShortCut.IconLocation
     }
 
-    If ($desc -Ne $Null -And $ShortCut.Description -Ne $desc) {
+    If ($orig_description -Ne $Null -And $ShortCut.Description -Ne $description) {
         Set-Attr $result "changed" $True
-        $ShortCut.Description = $desc
+        Set-Attr $result "description" $description
+        Set-Attr $result "msg" "description was changed"
+        $ShortCut.Description = $description
+    } Else {
+        Set-Attr $result "description" $ShortCut.Description
     }
 
-    If ($result["changed"] -Eq $True) {
+    If ($windowstyle -Ne $Null -And $ShortCut.WindowStyle -Ne $windowstyle) {
+        Set-Attr $result "changed" $True
+        Set-Attr $result "windowstyle" $windowstyle
+        Set-Attr $result "msg" "windowstyle was changed"
+        $ShortCut.WindowStyle = $windowstyle
+    } Else {
+        Set-Attr $result "windowstyle" $ShortCut.WindowStyle
+    }
+
+    If ($result["changed"] -Eq $True -And $_ansible_check_mode -Ne $True) {
         $ShortCut.Save()
         If ($? -Ne $True) {
             Fail-Json $result "Failed to create shortcut at $dest"
