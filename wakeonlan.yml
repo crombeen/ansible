@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: computers
   gather_facts: no
   connection: local
   tasks:
@@ -21,3 +21,7 @@
       connect_timeout: 5
       timeout: 30
       state: started
+
+#  - name: Wait for the system's WinRM service to come online
+#    wait_for_connection:
+#      timeout: 15
