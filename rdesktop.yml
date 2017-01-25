@@ -1,0 +1,87 @@
+- hosts: computers
+  tasks:
+  - name: Ensure rdpwrap is installed
+    win_chocolatey:
+      name: rdpwrapper
+      state: '{{ "absent" if ansible_os_name == "Windows 10 Pro" else "present" }}'
+
+  # Only do this for non-Pro versions
+  - block:
+    - name: Update rdpwrap config
+      win_psexec:
+        command: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe -w
+        system: yes
+      changed_when: no
+
+    # Reimplement RDPConf.exe in Ansible
+    - name: Configure RDP firewall rule
+      win_firewall_rule:
+        name: rdp
+        enable: yes
+        state: present
+        localport: 3389
+        action: allow
+        direction: In
+        protocol: TCP
+      register: fw
+      changed_when: True and "The rule \'rdp\' exists." not in fw.msg
+      failed_when: fw|failed and "The rule 'rdp' exists." not in fw.msg
+      ignore_errors: yes
+      tags: firewall
+
+    - name: Enable Terminal Server
+      win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server
+        name: '{{ item.name }}'
+        data: '{{ item.data }}'
+        type: dword
+      with_items:
+      - { name: fDenyTSConnections,    data: 0 }
+      - { name: fSingleSessionPerUser, data: 0 }
+      tags:
+      - registry
+
+    - name: Set RDP/tcp settings
+      win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+        name: '{{ item.name }}'
+        data: '{{ item.data }}'
+        type: dword
+      with_items:
+      - { name: PortNumber,         data: 3389 }
+      - { name: SecurityLayer,      data: 1 }
+      - { name: UserAuthentication, data: 0 }
+      - { name: Shadow,             data: 1 }
+      tags:
+      - registry
+
+    - name: Set Terminal Services Shadow
+      win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services
+        name: Shadow
+        data: 1
+        type: dword
+      tags:
+      - registry
+
+    - name: Set normal user selection on boot
+      win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+        name: dontdisplaylastusername
+        data: 0
+        type: dword
+      tags:
+      - hideuser
+      - registry
+
+     # Restarting TermService is not required
+#    - win_service:
+#        name: TermService
+#        state: restarted
+#        force: yes
+#      tags: service
+
+     # Reboot is not required
+#    - win_reboot:
+
+    when: ansible_os_name != "Windows 10 Pro"
