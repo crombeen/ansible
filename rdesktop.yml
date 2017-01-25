@@ -16,16 +16,17 @@
     # Reimplement RDPConf.exe in Ansible
     - name: Configure RDP firewall rule
       win_firewall_rule:
-        name: rdp
+        name: RemoteDesktop-UserMode-In-TCP
         enable: yes
         state: present
         localport: 3389
         action: allow
         direction: In
         protocol: TCP
+        profile: private
       register: fw
-      changed_when: True and "The rule \'rdp\' exists." not in fw.msg
-      failed_when: fw|failed and "The rule 'rdp' exists." not in fw.msg
+      changed_when: '"An identical rule exists" not in fw.msg'
+      failed_when: fw|failed and "An identical rule exists" not in fw.msg
       ignore_errors: yes
       tags: firewall
 

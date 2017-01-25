@@ -1,4 +1,4 @@
-- hosts: crombeen
+- hosts: computers
   gather_facts: no
   tasks:
   - name: Turn off computers
