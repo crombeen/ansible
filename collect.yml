@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: computers
   tasks:
   - setup:
     ignore_errors: yes
