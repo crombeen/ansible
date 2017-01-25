@@ -1,0 +1,53 @@
+- hosts: computerlokaal:computer53
+  gather_facts: no
+  tasks:
+  - name: Configuration
+    win_regedit:
+      key: '{{ item.key }}'
+      value: '{{ item.value }}'
+      data: '{{ item.data|default(None) }}'
+      datatype: '{{ item.type|default("string") }}'
+    with_items:
+
+    # Network configuration
+    # Remove OneDrive from Run
+    - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Run
+      value: OneDrive
+      state: absent
+
+    # Disable OneDrive (32bit)
+    - key: HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
+      value: System.IsPinnedToNameSpaceTree
+      data: 0
+      datatype: dword
+
+    - key: HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
+      value: System.IsPinnedToNameSpaceTree
+      data: 0
+      datatype: dword
+    tags:
+    - onedrive
+
+  - name: Remove OneDrive (1)
+    win_psexec:
+      command: taskkill /f /im OneDrive.exe
+      system: yes
+    ignore_errors: yes
+    tags:
+    - onedrive
+
+  - name: Remove OneDrive (2)
+    win_psexec:
+      command: C:\Windows\System32\OneDriveSetup.exe /uninstall
+      system: yes
+    ignore_errors: yes
+    tags:
+    - onedrive
+
+  - name: Remove OneDrive (3)
+    win_psexec:
+      command: C:\Windows\SysWOW64\OneDriveSetup.exe /uninstall
+      system: yes
+    ignore_errors: yes
+    tags:
+    - onedrive
