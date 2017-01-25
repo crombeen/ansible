@@ -1,6 +1,9 @@
 ---
 - include: wakeonlan.yml
 - include: collect.yml
+- include: rdesktop.yml
+- include: config.yml
+- include: onedrive.yml
+- include: users.yml
 - include: software.yml
 - include: desktop.yml
-- include: users.yml
