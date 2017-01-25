@@ -1,93 +1,71 @@
-- hosts: all
-  vars:
-    program_files: '{{ ansible_env["ProgramFiles"] }}'
-    user_directory:
+# Group Policies: https://msdn.microsoft.com/en-us/library/ms815238.aspx
+
+- hosts: computers
+  gather_facts: no
 
   tasks:
-  - name: On 64bit we would like to use the 32bit directory
-    set_fact:
-      program_files: '{{ ansible_env["ProgramFiles(x86)"] }}'
-    when: ansible_env["ProgramFiles(x86)"] is defined
-    tags: [ icons ]
-
-  - name: Remove unwanted desktop icons
-    win_shortcut:
-      dest: '{{ item }}'
-      state: absent
+  - name: Add shortcut icons
+    win_copy:
+      src: 'files/{{ item }}'
+      dest: '%Public%\Pictures\'
     with_items:
-#    - 'C:\Users\leerling\Desktop\Computermeester.lnk'
-#    - 'C:\Users\leerling\Desktop\Computermeester.url'
-#    - 'C:\Users\leerling Crombeen\Desktop\Computermeester.url'
-    - 'C:\Users\leerling\Desktop\WinDirStat.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\CDex.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\Google Chrome.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\Google Earth.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\Inkscape.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\InfraRecorder.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\LibreOffice 5.2.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\Mozilla Firefox.lnk'
-    - '{{ ansible_env.PUBLIC }}\Desktop\VLC media player.lnk'
+    - bingel.ico
+    - computermeester.ico
+    - symbaloo.ico
+    tags: icons
 
-  - name: Add default desktop icons
+  - name: Add default desktop shortcuts
     win_shortcut:
-      desc: '{{ item.desc }}'
+      description: '{{ item.desc }}'
       src: '{{ item.src }}'
       dest: '{{ item.dest }}'
-      args: '{{ item.args | default(none) }}'
-      directory: '{{ item.directory | default(none) }}'
-      icon: '{{ item.icon | default(none) }}'
+      icon: '{{ item.icon | default(",0") }}'
       state: present
     with_items:
-    - desc: Computer Meester website
-      dest: '{{ ansible_env.PUBLIC }}\Desktop\Computer Meester.lnk'
-      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
-      args: '--new-window http://computermeester.be/'
-      directory: '{{ program_files }}\Google\Chrome\Application'
-      icon: 'C:\WINDOWS\system32\imageres.dll,124'
+    - desc: ComputerMeester website
+      src: 'http://computermeester.be/'
+      dest: '%Public%\Desktop\Computer Meester.lnk'
+      icon: '%Public%\Pictures\computermeester.ico'
+      windowstyle: maximized
     - desc: Bingel website
-      dest: '{{ ansible_env.PUBLIC }}\Desktop\Bingel.lnk'
-      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
-      args: '--new-window https://www.bingel.be/bingel/'
-      directory: '{{ program_files }}\Google\Chrome\Application'
-      icon: 'C:\WINDOWS\system32\imageres.dll,65'
+      src: 'https://www.bingel.be/bingel/login/'
+      dest: '%Public%\Desktop\Bingel.lnk'
+      icon: '%Public%\Pictures\bingel.ico'
+      windowstyle: maximized
     - desc: Symbaloo website
-      dest: '{{ ansible_env.PUBLIC }}\Desktop\Symbaloo.lnk'
-      src: '{{ program_files }}\Google\Chrome\Application\chrome.exe'
-      args: '--new-window https://www.symbaloo.com/'
-      directory: '{{ program_files }}\Google\Chrome\Application'
-      icon: 'C:\WINDOWS\system32\imageres.dll,106'
-    tags: [ icons ]
+      src: 'https://www.symbaloo.com/'
+      dest: '%Public%\Desktop\Symbaloo.lnk'
+      icon: '%Public%\Pictures\symbaloo.ico'
+      windowstyle: maximized
+    - desc: Gedeelde ictadmin bestanden
+      src: '\\diskstation01\ictadmin'
+      dest: 'Desktop\ictadmin.lnk'
+      icon: '%SystemRoot%\system32\imageres.dll,117'
+    tags: shortcuts
 
-  - name: Add default desktop icons
+  - name: Add shortcuts for all computers
     win_shortcut:
       desc: '{{ item.desc }}'
       src: '{{ item.src }}'
       dest: '{{ item.dest }}'
-      state: present
+      icon: '{{ item.icon|default(item.src) }},0'
     with_items:
-    - { desc: Mijn Documenten, dest: '{{ ansible_env.PUBLIC }}\Desktop\Documenten.lnk', src: '%userprofile%\Documents' }
-    - { desc: Prullenbak,      dest: '{{ ansible_env.PUBLIC }}\Desktop\Prullenbak.lnk', src: 'shell:RecycleBinFolder' }
-    tags: [ icons ]
-
-  - name: Move files on Desktop to Documents
-#    win_command: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
-#    become_user: leerling
-    win_command: Move-Item C:\Users\leerling\Desktop\*.* C:\users\leerling\Documents\ -Force
-
-  - name: Add network shares for user ictadmin
-    win_shortcut:
-      desc: '{{ item.desc }}'
-      src: '{{ item.src }}'
-      dest: '{{ item.dest }}'
-      state: present
-    with_items:
-    - { desc: Netwerk \\diskstation01\ictadmin, dest: 'Desktop\ictadmin (I).lnk', src: 'I:\' }
-    - { desc: Netwerk \\diskstation01\music,    dest: 'Desktop\music (M).lnk',    src: 'M:\' }
-    - { desc: Netwerk \\diskstation01\video,    dest: 'Desktop\video (V).lnk',    src: 'V:\' }
-    - { desc: Netwerk \\diskstation01\photo,    dest: 'Desktop\photo (P).lnk',    src: 'P:\' }
-    - { desc: Netwerk \\diskstation01\bordboek, dest: 'Desktop\bordboek (B).lnk', src: 'B:\' }
-    - { desc: Netwerk \\diskstation01\games,    dest: 'Desktop\games (G).lnk',    src: 'G:\' }
-    tags: [ icons, shares ]
+    - desc: Mijn Documenten
+      dest: '%Public%\Desktop\Documenten.lnk'
+      src: '%UserProfile%\Documents'
+      icon:
+    - desc: Prullenbak
+      dest: '%Public%\Desktop\Prullenbak.lnk'
+      src: 'shell:RecycleBinFolder'
+      icon:
+    - desc: Process Explorer
+      dest: 'Desktop\Process Explorer.lnk'
+      src: 'procexp.exe'
+    - desc: Autoruns
+      dest: 'Desktop\Autoruns.lnk'
+      src: 'autoruns.exe'
+    tags:
+    - shortcuts
 
   - name: Set default system locale to nl-BE
     raw: Set-WinSystemLocale nl-BE
@@ -104,26 +82,68 @@
     with_items:
     - { key: 'HKCU:\Control Panel\Desktop', value: Wallpaper, data: '', type: string }
     - { key: 'HKCU:\Control Panel\Desktop', value: WallpaperStyle, data: 10, type: string }
-    - { key: 'HKCU:\Control Panel\Colors', value: Background, data: '232 17 35', type: string }
+    - { key: 'HKCU:\Control Panel\Colors',  value: Background, data: '232 17 35', type: string }
     - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguages, data: 'nl-BE', type: multistring }
-    - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguagesPending, data: 'nl-BE', type: multistring }
-    tags: [ bg, registry ]
+#    - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguagesPending, data: 'nl-BE', type: multistring }
+    tags:
+    - bg
+    - ictadmin
+    - registry
 
-# FIXME: This does not seem to work
-#
-#  - raw: Get-AppxPackage *3d* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *camera* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *communi* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *bing* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *zune* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *people* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *phone* | Remove-AppxPack
-#  - raw: Get-AppxPackage *photo* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *solit* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *soundrec* | Remove-AppxPackage
-#  - raw: Get-AppxPackage *xbox* | Remove-AppxPackage
-#  - raw: powercfg -change -standby-timeout-ac 60
-#  - raw: powercfg -change -monitor-timeout-ac 15
-#  - raw: >
-#      $e = (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}')
-#      $e.Items() | %{$_.Verbs()} | ?{$_.Name.replace('&','') -match 'Unpin from Start'} | %{$_.DoIt()}
+  - name: Remove unwanted desktop shortcuts
+    win_shortcut:
+      dest: '{{ item }}'
+      state: absent
+    with_items:
+    - 'C:\Users\leerling\Desktop\WinDirStat.lnk'
+    - '%Public%\Desktop\KeePass 2.lnk'
+    - '%Public%\Desktop\Audacity.lnk'
+    - '%Public%\Desktop\CDex.lnk'
+    - '%Public%\Desktop\Google Chrome.lnk'
+    - '%Public%\Desktop\Google Earth.lnk'
+    - '%Public%\Desktop\Inkscape.lnk'
+    - '%Public%\Desktop\InfraRecorder.lnk'
+    - '%Public%\Desktop\LibreOffice 5.1.lnk'
+    - '%Public%\Desktop\LibreOffice 5.2.lnk'
+    - '%Public%\Desktop\Mozilla Firefox.lnk'
+    - '%Public%\Desktop\VLC media player.lnk'
+    - 'Desktop\ictadmin (I).lnk'
+    tags:
+    - cleanup
+    - shortcuts
+
+- hosts: computerlokaal
+  tasks:
+  - name: Move files on Desktop to Documents
+#    win_shell: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
+#    become_user: leerling
+    win_shell: Move-Item C:\Users\leerling\Desktop\* C:\users\leerling\Documents\ -Force
+    tags: [ cleanup, docs ]
+
+  - name: Add Music/Video shortcuts
+    win_shortcut:
+      desc: '{{ item.desc }}'
+      src: '{{ item.src }}'
+      dest: '{{ item.dest }}'
+      icon: '%SystemRoot%\system32\imageres.dll,{{ item.idx }}'
+    with_items:
+    - { desc: Gedeelde muziek bestanden,   dest: 'Desktop\Muziek.lnk',   src: '\\diskstation01\music',    idx: 103 }
+    - { desc: Gedeelde video bestanden,    dest: 'Desktop\Video.lnk',    src: '\\diskstation01\video',    idx: 178 }
+    tags:
+    - shares
+    - shortcuts
+
+- hosts: klaslokaal:gang:administratie
+  tasks:
+  - name: Add Music/Video shortcuts
+    win_shortcut:
+      desc: '{{ item.desc }}'
+      src: '{{ item.src }}'
+      dest: '{{ item.dest }}'
+      icon: '%SystemRoot%\system32\imageres.dll,{{ item.idx }}'
+    with_items:
+    - { desc: Gedeelde muziek bestanden, dest: '%Public%\Desktop\Muziek.lnk', src: '\\diskstation01\music', idx: 103 }
+    - { desc: Gedeelde video bestanden,  dest: '%Public%\Desktop\Video.lnk',  src: '\\diskstation01\video', idx: 178 }
+    tags:
+    - shares
+    - shortcuts
