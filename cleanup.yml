@@ -1,4 +1,6 @@
-- hosts: all
+- hosts: computers
+  gather_facts: no
+  strategy: free
   tasks:
   - name: Remove unwanted software using Chocolatey
     win_chocolatey:
@@ -10,6 +12,8 @@
 #    - adobereader
 #    - adobereader-update
     - adobeshockwaveplayer
+    - autohotkey
+    - autoruns
     - avastbrowsercleanup
     - avastfreeantivirus
     - avgantivirusfree
@@ -19,39 +23,31 @@
 #    - dropbox
     - flashplayerplugin
     - flashplayeractivex
+    - freerdp
     - openoffice
+    - procexp
     - quicktime
     - windbg
-    tags: software
+    tags:
+    - chocolatey
+    - software
 
 - hosts: computerlokaal
+  strategy: free
   tasks:
- - name: Remove software
-    raw: $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"; $app.Uninstall();
+  - name: Remove software
+    win_shell: |
+      $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"
+      If ($app) {
+        $app.Uninstall()
+      }
     with_items:
     - Adobe AIR
     - Acrobat Reader X
     - Lenovo Solution Center
     - SDK Debuggers
-
-# FIXME: This doesn't work
-#
-#- hosts: computerlokaal
-#  tasks:
-#  - name: Remove software
-#    raw: $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"; $app.Uninstall();
-#    with_items:
-#    - Adobe AIR
-#    - Acrobat Reader X
-#    - Lenovo Solution Center
-#    - SDK Debuggers
-
-#  - name: Remove unmanaged software
-#    win_package:
-#      name: '{{ item }}'
-#      state: absent
-#    with_items:
-#    - winzip
+    tags:
+    - windows
 
 #  - name: Disable Windows Features
 #    win_feature:
@@ -61,41 +57,38 @@
 #    - Hearts
 #    - Internet-Explorer-Optional-amd64
 
-# - hosts: all
-#   tasks:
-#  - raw: 'Get-AppxPackage Microsoft.WindowsAlarms*'
-#  - raw: "Get-AppxPackage {{ item }} | Remove-AppxPackage"
-#    with_items:
-#     - Microsoft.WindowsAlarms
-#     - Microsoft.People
-#     - Microsoft.ConnectivityStore
-#     - Microsoft.WindowsStore
-#     - Microsoft.XboxApp
-#     - E046963F.LenovoCompanion
-#     - Microsoft.WindowsMaps
-#     - Microsoft.ZuneVideo
-#     - Microsoft.3DBuilder
-#     - Microsoft.Office.Sway
-#     - Microsoft.WindowsCamera
-#     - Microsoft.ZuneMusic
-#     - Microsoft.windowscommunicationsapps
-#     - Microsoft.CommsPhone
-#     - Microsoft.Windows.Photos
-#     - Microsoft.BingFinance
-#     - Microsoft.BingNews
-#     - Microsoft.MicrosoftSolitaireCollection
-#     - Microsoft.BingSports
-#     - Microsoft.BingWeather
-#     - *CandyCrush*
+- hosts: all
+  tasks:
+  - win_shell: |
+      Get-AppxPackage {{ item }} | Remove-AppxPackage
+    with_items:
+    - 'Microsoft.WindowsAlarms*'
+    - Microsoft.People
+    - Microsoft.ConnectivityStore
+    - Microsoft.WindowsStore
+    - Microsoft.XboxApp
+    - E046963F.LenovoCompanion
+    - Microsoft.WindowsMaps
+    - Microsoft.ZuneVideo
+    - Microsoft.3DBuilder
+    - Microsoft.Office.Sway
+    - Microsoft.WindowsCamera
+    - Microsoft.ZuneMusic
+    - Microsoft.windowscommunicationsapps
+    - Microsoft.CommsPhone
+    - Microsoft.Windows.Photos
+    - Microsoft.BingFinance
+    - Microsoft.BingNews
+    - Microsoft.MicrosoftSolitaireCollection
+    - Microsoft.BingSports
+    - Microsoft.BingWeather
+    - '*CandyCrush*'
+    tags:
+    - appx
+    - windows
 
-#   - script: files/RemoveAppxPackages1.ps1
- 
-#   - script: files/RemoveAppxPackages.ps1
- 
- #  - win_software:
- #      state: list
- #      name: Null
- 
- #  - win_software:
- #      name: Lytro Desktop
- #      state: absent
+  - raw: powercfg -change -monitor-timeout-ac 15
+  - raw: powercfg -change -standby-timeout-ac 60
+#  - raw: >
+#      $e = (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}')
+#      $e.Items() | %{$_.Verbs()} | ?{$_.Name.replace('&','') -match 'Unpin from Start'} | %{$_.DoIt()}
