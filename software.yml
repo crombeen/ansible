@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: computers
   strategy: free
   tasks:
   - name: Install chocolatey on new systems
@@ -26,7 +26,6 @@
     - cdex
     - chocolateygui
     - firefox
-    - freerdp
     - gimp
     - googlechrome
 #    - googleearth
@@ -35,7 +34,7 @@
     - keepass.install
     - libreoffice
     - notepadplusplus
-#    - rdpwrap
+    - rdpwrapper
     - sysinternals
     - tipp10
     - vlc
