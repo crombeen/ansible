@@ -1,0 +1,229 @@
+# Group Policies: https://msdn.microsoft.com/en-us/library/ms815238.aspx
+
+- hosts: computers
+  gather_facts: no
+  tasks:
+  - name: Configuration
+    win_regedit:
+      path: '{{ item.key }}'
+      name: '{{ item.value }}'
+      data: '{{ item.data|default(None) }}'
+      type: '{{ item.type|default("string") }}'
+    with_items:
+
+    # Network configuration
+    - key: HKLM:\System\ControlSet001\Control\ComputerName\ActiveComputerName
+      value: ComputerName
+      data: '{{ inventory_hostname_short }}'
+    - key: HKLM:\System\ControlSet001\Control\ComputerName\ComputerName
+      value: ComputerName
+      data: '{{ inventory_hostname_short }}'
+    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      value: HostName
+      data: '{{ inventory_hostname_short }}'
+    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      value: NV HostName
+      data: '{{ inventory_hostname_short }}'
+    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      value: Domain
+      data: crombeen.internal
+    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      value: NV Domain
+      data: crombeen.internal
+
+    # Disable all apps from Windows Store
+    - key: HKLM:\Software\Policies\Microsoft\WindowsStore
+      value: DisableStoreApps
+      data: 1
+      datatype: dword
+
+    # Disable language hotkey
+    #   1 = Key Sequence enabled; use LEFT ALT+SHIFT to switch between locales.
+    #   2 = Key Sequence enabled; use CTRL+SHIFT to switch between locales.
+    #   3 = Key Sequences disabled.
+    - key: HKU:\.DEFAULT\Keyboard Layout\Toggle
+      value: Language Hotkey
+      data: 3
+      datatype: dword
+    - key: HKU:\.DEFAULT\Keyboard Layout\Toggle
+      value: Layout Hotkey
+      data: 3
+      datatype: dword
+    - key: HKU:\.DEFAULT\Keyboard Layout\Toggle
+      value: Hotkey
+      data: 3
+      datatype: dword
+#    - key: HKCU:\Keyboard Layout\Toggle
+#      value: Language Hotkey
+#      data: 3
+#      datatype: dword
+#    - key: HKCU:\Keyboard Layout\Toggle
+#      value: Layout Hotkey
+#      data: 3
+#      datatype: dword
+#    - key: HKCU:\Keyboard Layout\Toggle
+#      value: Hotkey
+#      data: 3
+#      datatype: dword
+
+  - win_shell: |
+      Get-AppxPackage -name "Microsoft.ZuneMusic" | Remove-AppxPackage
+      Get-AppxPackage -name "Microsoft.ZuneVideo" | Remove-AppxPackage
+    tags: vlc
+
+  - name: Enable VideoLan Client for ISO/MP3
+    win_regedit:
+      path: '{{ item.path }}'
+      name: '{{ item.name }}'
+      data: '{{ item.data }}'
+      type: '{{ item.type|default("string") }}'
+    with_items:
+    # ISO support
+    - path: HKCR:\VLC.iso
+      name: '(default)'
+      data: VLC media file (.iso)
+    - path: HKCR:\VLC.iso\DefaultIcon
+      name: '(default)'
+      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe",0'
+      type: expandstring
+    - path: HKCR:\VLC.iso\shell
+      name: '(default)'
+      data: Open
+    - path: HKCR:\VLC.iso\shell\Open
+      name: '(default)'
+      data: Afspelen
+    - path: HKCR:\VLC.iso\shell\Open\command
+      name: '(default)'
+      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe" --started-from-file "%1"'
+      type: expandstring
+    - path: HKCR:\VLC.iso\shell\PlayWithVLC
+      name: '(default)'
+      data: VLC Media Player - Afspelen
+    - path: HKCR:\VLC.iso\shell\PlayWithVLC\command
+      name: '(default)'
+      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe" --started-from-file --no-playlist-enqueue "%1"'
+      type: expandstring
+    - path: HKCR:\.iso
+      name: '(default)'
+      data: VLC.iso
+    - path: HKCR:\.iso\OpenWithProgids
+      name: VLC.iso
+      data:
+
+    # MP3 support
+#    - path: HKCR:\VLC.mp3
+#      name: '(default)'
+#      data: VLC media file (.mp3)
+#    - path: HKCR:\VLC.iso\DefaultIcon
+#      name: '(default)'
+#      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe",0'
+#      type: expandstring
+#    - path: HKCR:\VLC.mp3\shell
+#      name: '(default)'
+#      data: Open
+#    - path: HKCR:\VLC.mp3\shell\Open
+#      name: '(default)'
+#      data: Afspelen
+#      type: string
+#    - path: HKCR:\VLC.mp3\shell\Open\command
+#      name: '(default)'
+#      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe" --started-from-file "%1"'
+#      type: expandstring
+#    - path: HKCR:\VLC.mp3\shell\PlayWithVLC
+#      name: '(default)'
+#      data: VLC Media Player - Afspelen
+#    - path: HKCR:\VLC.mp3\shell\PlayWithVLC\command
+#      name: '(default)'
+#      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe" --started-from-file --no-playlist-enqueue "%1"'
+#      type: expandstring
+#    - path: HKCR:\.mp3
+#      name: '(default)'
+#      data: VLC.mp3
+#    - path: HKCR:\.iso\OpenWithProgids
+#      name: VLC.iso
+#      data:
+    tags: vlc
+
+- hosts: computerlokaal:computer53
+  gather_facts: no
+  tasks:
+  - name: Configuration
+    win_regedit:
+      key: '{{ item.key }}'
+      value: '{{ item.value }}'
+      data: '{{ item.data|default(None) }}'
+      datatype: '{{ item.type|default("string") }}'
+    with_items:
+
+    # Network configuration
+    # Remove OneDrive from Run
+    - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Run
+      value: OneDrive
+      state: absent
+
+    # Disable OneDrive (32bit)
+    - key: HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
+      value: System.IsPinnedToNameSpaceTree
+      data: 0
+      datatype: dword
+
+    - key: HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
+      value: System.IsPinnedToNameSpaceTree
+      data: 0
+      datatype: dword
+
+    # Disable Windows Remote UAC
+    - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+      value: LocalAccountTokenFilterPolicy
+      data: 1
+      datatype: dword
+
+    # Disable and remove the Shut Down command (Leerling)
+#    - key: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#      value: NoClose
+#      data: 1
+#      datatype: dword
+
+    # Disable changing wallpaper
+    - key: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop
+      value: NoChangingWallPaper
+      data: 1
+      datatype: dword
+
+    # Enable Classic Shell
+#    - key: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#      value: ClassicShell
+#      data: 1
+#      datatype: dword
+
+    # Enable connecting and disconnecting a LAN connection
+#    - key: HKCU:\Software\Policies\Microsoft\Windows\Network Connections
+#      value: NC_LanConnect
+#      data: 0
+#      datatype: dword
+    tags:
+    - onedrive
+
+  - name: Remove OneDrive (1)
+    win_psexec:
+      command: taskkill /f /im OneDrive.exe
+      system: yes
+    ignore_errors: yes
+    tags:
+    - onedrive
+
+  - name: Remove OneDrive (2)
+    win_psexec:
+      command: C:\Windows\System32\OneDriveSetup.exe /uninstall
+      system: yes
+    ignore_errors: yes
+    tags:
+    - onedrive
+
+  - name: Remove OneDrive (3)
+    win_psexec:
+      command: C:\Windows\SysWOW64\OneDriveSetup.exe /uninstall
+      system: yes
+    ignore_errors: yes
+    tags:
+    - onedrive
