@@ -30,6 +30,9 @@
     - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
       value: NV Domain
       data: crombeen.internal
+    - key: HKLM:\System\ControlSet001\Services\LanmanServer\Parameters
+      value: SrvComment
+      data: '{{ owner }} ({{ room }})'
 
     # Disable all apps from Windows Store
     - key: HKLM:\Software\Policies\Microsoft\WindowsStore
@@ -75,7 +78,7 @@
     win_regedit:
       path: '{{ item.path }}'
       name: '{{ item.name }}'
-      data: '{{ item.data }}'
+      data: '{{ item.data|default(None) }}'
       type: '{{ item.type|default("string") }}'
     with_items:
     # ISO support
@@ -106,42 +109,23 @@
     - path: HKCR:\.iso
       name: '(default)'
       data: VLC.iso
+
+    # ISO/MP3/WMA support
     - path: HKCR:\.iso\OpenWithProgids
       name: VLC.iso
-      data:
-
-    # MP3 support
-#    - path: HKCR:\VLC.mp3
-#      name: '(default)'
-#      data: VLC media file (.mp3)
-#    - path: HKCR:\VLC.iso\DefaultIcon
-#      name: '(default)'
-#      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe",0'
-#      type: expandstring
-#    - path: HKCR:\VLC.mp3\shell
-#      name: '(default)'
-#      data: Open
-#    - path: HKCR:\VLC.mp3\shell\Open
-#      name: '(default)'
-#      data: Afspelen
-#      type: string
-#    - path: HKCR:\VLC.mp3\shell\Open\command
-#      name: '(default)'
-#      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe" --started-from-file "%1"'
-#      type: expandstring
-#    - path: HKCR:\VLC.mp3\shell\PlayWithVLC
-#      name: '(default)'
-#      data: VLC Media Player - Afspelen
-#    - path: HKCR:\VLC.mp3\shell\PlayWithVLC\command
-#      name: '(default)'
-#      data: '"%ProgramFiles%\VideoLAN\VLC\vlc.exe" --started-from-file --no-playlist-enqueue "%1"'
-#      type: expandstring
-#    - path: HKCR:\.mp3
-#      name: '(default)'
-#      data: VLC.mp3
-#    - path: HKCR:\.iso\OpenWithProgids
-#      name: VLC.iso
-#      data:
+      type: none
+    - path: HKCR:\.mp3\OpenWithProgids
+      name: VLC.mp3
+      type: none
+    - path: HKCR:\.mkv\OpenWithProgids
+      name: VLC.mkv
+      type: none
+    - path: HKCR:\.mp4\OpenWithProgids
+      name: VLC.mp4
+      type: none
+    - path: HKCR:\.wma\OpenWithProgids
+      name: VLC.wma
+      type: none
     tags: vlc
 
 - hosts: computerlokaal:computer53
@@ -154,23 +138,6 @@
       data: '{{ item.data|default(None) }}'
       datatype: '{{ item.type|default("string") }}'
     with_items:
-
-    # Network configuration
-    # Remove OneDrive from Run
-    - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Run
-      value: OneDrive
-      state: absent
-
-    # Disable OneDrive (32bit)
-    - key: HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
-      value: System.IsPinnedToNameSpaceTree
-      data: 0
-      datatype: dword
-
-    - key: HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
-      value: System.IsPinnedToNameSpaceTree
-      data: 0
-      datatype: dword
 
     # Disable Windows Remote UAC
     - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
@@ -201,29 +168,11 @@
 #      value: NC_LanConnect
 #      data: 0
 #      datatype: dword
-    tags:
-    - onedrive
 
-  - name: Remove OneDrive (1)
-    win_psexec:
-      command: taskkill /f /im OneDrive.exe
-      system: yes
-    ignore_errors: yes
-    tags:
-    - onedrive
+  - win_shell: |
+      powercfg -change -monitor-timeout-ac 15
+    tags: power
 
-  - name: Remove OneDrive (2)
-    win_psexec:
-      command: C:\Windows\System32\OneDriveSetup.exe /uninstall
-      system: yes
-    ignore_errors: yes
-    tags:
-    - onedrive
-
-  - name: Remove OneDrive (3)
-    win_psexec:
-      command: C:\Windows\SysWOW64\OneDriveSetup.exe /uninstall
-      system: yes
-    ignore_errors: yes
-    tags:
-    - onedrive
+  - win_shell: |
+      powercfg -change -standby-timeout-ac 60
+    tags: power
