@@ -4,12 +4,16 @@
 The following actions have to be taken to enable WinRM Powershell remoting.
 
 === Enable WinRM
-Start Powershell (Run as Administrator) and run the following command: +WinRM qc+
+Start Powershell (Run as Administrator) and run the following command:
+
+    WinRM qc
 
 Answer *yes* on each question asked.
 
 === Allow Powershell script execution
-Start Powershell (Run as Administrator) and run the following command: +Set-ExecutionPolicy+
+Start Powershell (Run as Administrator) and run the following command:
+
+    Set-ExecutionPolicy
 
 Enter the policy to be used: +Bypass+
 
@@ -18,10 +22,11 @@ Answer *yes* when asked to change the policy.
 (Or use proper client certificates, which we plan to do)
 
 === Allow Powershell remoting for Ansible
-Start Powershell (Run as Administrator) and run the following command: +ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650+
+Start Powershell (Run as Administrator) and run the following command:
 
-Enable Wake-on-LAN (WoL)
+    ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650
 
+=== Enable Wake-on-LAN (WoL)
 In order to automatically turn on systems when doing maintenance, we configured the systems to support Wake-on-LAN.
 Most systems are configured this way automatically, however in some cases they need specific changes to make them work as we like.
 
@@ -69,24 +74,24 @@ Still need to be implement:
 Existing Ansible playbooks are available from: https://github.com/crombeen/ansible
 
 === Turning all desktops on
-    $ ansible-playbook -k -l crombeen wakeonlan.yml
+    $ ansible-playbook -k wakeonlan.yml
 
 === Collect information
-    $ ansible-playbook -k -l crombeen collect.yml
+    $ ansible-playbook -k collect.yml
 
 === Manage software
-    $ ansible-playbook -k -l crombeen software.yml
-    $ ansible-playbook -k -l crombeen cleanup.yml
+    $ ansible-playbook -k software.yml
+    $ ansible-playbook -k cleanup.yml
 
 === Manage users
-    $ ansible-playbook -k -l crombeen users.yml
+    $ ansible-playbook -k users.yml
 
 === Manage desktop
-    $ ansible-playbook -k -l crombeen desktop.yml
+    $ ansible-playbook -k desktop.yml
 
 === Run everything
 
-    $ ansible-playbook -k -l crombeen site.yml
+    $ ansible-playbook -k site.yml
 
 
 == Problems
@@ -115,4 +120,3 @@ More resources related to Powershell and Ansible-integration below:
 === Powershell
 
  - https://developer.rackspace.com/blog/powershell-101-from-a-linux-guy/[Powershell 101 from a Linux guy]
-
