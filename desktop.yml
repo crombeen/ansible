@@ -59,11 +59,14 @@
       src: 'shell:RecycleBinFolder'
       icon:
     - desc: Process Explorer
-      dest: 'Desktop\Process Explorer.lnk'
-      src: 'procexp.exe'
+      dest: Desktop\Process Explorer.lnk
+      src: procexp.exe
     - desc: Autoruns
-      dest: 'Desktop\Autoruns.lnk'
-      src: 'autoruns.exe'
+      dest: Desktop\Autoruns.lnk
+      src: autoruns.exe
+    - desc: WakeMeOnLan
+      dest: Desktop\WakeMeOnLan.lnk
+      src: \\diskstation01\ictadmin\Tools\WakeMeOnLan\WakeMeOnLan.exe
     tags:
     - shortcuts
 
@@ -118,7 +121,10 @@
 #    win_shell: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
 #    become_user: leerling
     win_shell: Move-Item C:\Users\leerling\Desktop\* C:\users\leerling\Documents\ -Force
-    tags: [ cleanup, docs ]
+    failed_when: no
+    tags:
+    - cleanup
+    - docs
 
   - name: Add Music/Video shortcuts
     win_shortcut:
