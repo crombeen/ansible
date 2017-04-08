@@ -1,77 +1,231 @@
+# Copyright 2016, Dag Wieers <dag@wieers.com>
+#
+# This playbook configures system-related settings. It is intended to
+# be used on newly installed systems. Or whenever this playbook changes.
+
 # Group Policies: https://msdn.microsoft.com/en-us/library/ms815238.aspx
 
 - hosts: computers
   gather_facts: no
   tasks:
-  - name: Configuration
+  - name: Test system connection
+    wait_for_connection:
+      timeout: 20
+
+  - name: Registry configuration
     win_regedit:
-      path: '{{ item.key }}'
-      name: '{{ item.value }}'
+      path: '{{ item.path }}'
+      name: '{{ item.name }}'
       data: '{{ item.data|default(None) }}'
-      type: '{{ item.type|default("string") }}'
+      type: '{{ item.type|default("dword") }}'
+      state: '{{ item.state|default("present") }}'
     with_items:
 
     # Network configuration
-    - key: HKLM:\System\ControlSet001\Control\ComputerName\ActiveComputerName
-      value: ComputerName
-      data: '{{ inventory_hostname_short }}'
-    - key: HKLM:\System\ControlSet001\Control\ComputerName\ComputerName
-      value: ComputerName
-      data: '{{ inventory_hostname_short }}'
-    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-      value: HostName
-      data: '{{ inventory_hostname_short }}'
-    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-      value: NV HostName
-      data: '{{ inventory_hostname_short }}'
-    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-      value: Domain
-      data: crombeen.internal
-    - key: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-      value: NV Domain
-      data: crombeen.internal
-    - key: HKLM:\System\ControlSet001\Services\LanmanServer\Parameters
-      value: SrvComment
+#    - path: HKLM:\System\ControlSet001\Control\ComputerName\ActiveComputerName
+#      name: ComputerName
+#      data: '{{ inventory_hostname_short|lower }}'
+#      type: string
+#    - path: HKLM:\System\ControlSet001\Control\ComputerName\ComputerName
+#      name: ComputerName
+#      data: '{{ inventory_hostname_short|lower }}'
+#      type: string
+#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+#      name: HostName
+#      data: '{{ inventory_hostname_short|lower }}'
+#      type: string
+#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+#      name: NV HostName
+#      data: '{{ inventory_hostname_short|lower }}'
+#      type: string
+#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+#      name: Domain
+#      data: crombeen.internal
+#      type: string
+#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+#      name: NV Domain
+#      data: crombeen.internal
+#      type: string
+    - path: HKLM:\System\ControlSet001\Services\LanmanServer\Parameters
+      name: SrvComment
       data: '{{ owner }} ({{ room }})'
+      type: string
 
     # Disable all apps from Windows Store
-    - key: HKLM:\Software\Policies\Microsoft\WindowsStore
-      value: DisableStoreApps
+    - path: HKLM:\Software\Policies\Microsoft\WindowsStore
+      name: DisableStoreApps
       data: 1
-      datatype: dword
+
+    # Set primary keyboard layout to nl-BE
+    - path: HKU:\.DEFAULT\Keyboard Layout\Preload
+      name: '1'
+      data: 00000813
+      type: string
+    # Remove secondary keyboard layout
+    - path: HKU:\.DEFAULT\Keyboard Layout\Preload
+      name: '2'
+      state: absent
+    # Remove tertiary keyboard layouts
+    - path: HKU:\.DEFAULT\Keyboard Layout\Preload
+      name: '3'
+      state: absent
 
     # Disable language hotkey
     #   1 = Key Sequence enabled; use LEFT ALT+SHIFT to switch between locales.
     #   2 = Key Sequence enabled; use CTRL+SHIFT to switch between locales.
     #   3 = Key Sequences disabled.
-    - key: HKU:\.DEFAULT\Keyboard Layout\Toggle
-      value: Language Hotkey
+    - path: HKU:\.DEFAULT\Keyboard Layout\Toggle
+      name: Language Hotkey
       data: 3
-      datatype: dword
-    - key: HKU:\.DEFAULT\Keyboard Layout\Toggle
-      value: Layout Hotkey
+    - path: HKU:\.DEFAULT\Keyboard Layout\Toggle
+      name: Layout Hotkey
       data: 3
-      datatype: dword
-    - key: HKU:\.DEFAULT\Keyboard Layout\Toggle
-      value: Hotkey
+    - path: HKU:\.DEFAULT\Keyboard Layout\Toggle
+      name: Hotkey
       data: 3
-      datatype: dword
-#    - key: HKCU:\Keyboard Layout\Toggle
-#      value: Language Hotkey
+#    - path: HKCU:\Keyboard Layout\Toggle
+#      name: Language Hotkey
 #      data: 3
-#      datatype: dword
-#    - key: HKCU:\Keyboard Layout\Toggle
-#      value: Layout Hotkey
+#    - path: HKCU:\Keyboard Layout\Toggle
+#      name: Layout Hotkey
 #      data: 3
-#      datatype: dword
-#    - key: HKCU:\Keyboard Layout\Toggle
-#      value: Hotkey
+#    - path: HKCU:\Keyboard Layout\Toggle
+#      name: Hotkey
 #      data: 3
-#      datatype: dword
 
-  - win_shell: |
+    # Windows 10 Registry Hacks: https://ss64.com/nt/syntax-reghacks.html
+
+    # System Tray - Show all icons (The default for this can be set under HKLM)
+    - path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
+      name: EnableAutoTray
+      data: 0
+
+    # Do not add "-Shortcut" text to the name of newly created shortcuts.
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
+      name: link
+      data: hex:00,00,00,00
+      type: binary
+
+    # Show all folders in Explorer including Recycle Bin, Desktop, Control Panel
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: NavPaneShowAllFolders
+      data: 1
+
+    # Show hidden files and folders
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: Hidden
+      data: 1
+
+    # Hide empty drives in My Computer folder
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: HideDrivesWithNoMedia
+      data: 0
+
+    # Do not hide file extensions
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: HideFileExt
+      data: 0
+
+    # Show hidden Operating System files
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: ShowSuperHidden
+      data: 2
+
+    # Do not show notifications/adverts (OneDrive & new features) in Windows Explorer
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: ShowSyncProviderNotifications
+      data: 0
+
+    # Do not slow down search by including all public folders
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: Start_SearchFiles
+      data: 1
+
+    # Remove Homegroup from Explorer
+    - path: HKLM:\SOFTWARE\Classes\{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}
+      name: System.IsPinnedToNameSpaceTree
+      data: 0
+
+    # Prevent "Suggested Applications" to return
+    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Cloud Content
+      name: DisableWindowsConsumerFeatures
+      data: 1
+
+    # Disable Cortana (Windows 10 Anniversary+)
+    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
+      name: AllowCortana
+      data: 0
+
+    tags: registry
+
+  - name: Set default system locale to nl-BE
+    win_shell: |
+      Set-Culture nl-BE
+      Set-WinSystemLocale nl-BE
+      Set-WinHomeLocation -GeoId 21
+      Set-WinUserLanguageList -LanguageList nl-BE -Force
+
+  - name: Configure hostname, domain and workgroup
+    win_domain_membership:
+      hostname: '{{ inventory_hostname_short|lower }}'
+      dns_domain_name: crombeen.internal
+      workgroup_name: CROMBEEN
+      domain_admin_user: '{{ ansible_winrm_username }}'
+      domain_admin_password: '{{ ansible_winrm_password }}'
+      state: workgroup
+    tags: workgroup
+
+  - name: Configure DNS servers
+    win_dns_client:
+      adapter_names: '*'
+      ipv4_addresses:
+      - 192.168.0.253
+      - 8.8.4.4
+      - 8.8.8.8
+      - 195.238.2.21
+      - 195.238.2.22
+      - 192.168.0.254
+    tags: dns
+
+  - name: Disable default services
+    win_service:
+      name: '{{ item }}'
+      start_mode: disabled
+      state: stopped
+    with_items:
+    - diagnosticshub.standardcollector.service # Microsoft (R) Diagnostics Hub Standard Collector Service
+    - DiagTrack                                # Diagnostics Tracking Service
+    - dmwappushservice                         # WAP Push Message Routing Service (see known issues)
+    - HomeGroupListener                        # HomeGroup Listener
+    - HomeGroupProvider                        # HomeGroup Provider
+    - lfsvc                                    # Geolocation Service
+    - MapsBroker                               # Downloaded Maps Manager
+    - NetTcpPortSharing                        # Net.Tcp Port Sharing Service
+    - RemoteAccess                             # Routing and Remote Access
+    - RemoteRegistry                           # Remote Registry
+    - SharedAccess                             # Internet Connection Sharing (ICS)
+    - TrkWks                                   # Distributed Link Tracking Client
+    - WbioSrvc                                 # Windows Biometric Service
+    #- WlanSvc                                 # WLAN AutoConfig
+    - WMPNetworkSvc                            # Windows Media Player Network Sharing Service
+    #- wscsvc                                   # Windows Security Center Service
+    #- WSearch                                 # Windows Search
+    - XblAuthManager                           # Xbox Live Auth Manager
+    - XblGameSave                              # Xbox Live Game Save Service
+    - XboxNetApiSvc                            # Xbox Live Networking Service
+    tags: services
+
+  - name: Configure time zone
+    win_timezone:
+      timezone: 'Romance Standard Time'
+    tags: timezone
+
+  - name: Disable Zune Music and Zune Video appx
+    win_shell: |
       Get-AppxPackage -name "Microsoft.ZuneMusic" | Remove-AppxPackage
       Get-AppxPackage -name "Microsoft.ZuneVideo" | Remove-AppxPackage
+    register: appx
+    changed_when: "'Deployment operation progress: ' in appx.stderr"
     tags: vlc
 
   - name: Enable VideoLan Client for ISO/MP3
@@ -114,11 +268,11 @@
     - path: HKCR:\.iso\OpenWithProgids
       name: VLC.iso
       type: none
-    - path: HKCR:\.mp3\OpenWithProgids
-      name: VLC.mp3
-      type: none
     - path: HKCR:\.mkv\OpenWithProgids
       name: VLC.mkv
+      type: none
+    - path: HKCR:\.mp3\OpenWithProgids
+      name: VLC.mp3
       type: none
     - path: HKCR:\.mp4\OpenWithProgids
       name: VLC.mp4
@@ -128,51 +282,53 @@
       type: none
     tags: vlc
 
-- hosts: computerlokaal:computer53
+#  - name: Disable hibernate option (removes hibernation file hiberfil.sys)
+#    win_shell: |
+#      powercfg.exe -h off
+#    tags: power
+
+- hosts: computerlokaal:gang:technieklokaal:computer53
   gather_facts: no
   tasks:
   - name: Configuration
     win_regedit:
-      key: '{{ item.key }}'
-      value: '{{ item.value }}'
+      path: '{{ item.path }}'
+      name: '{{ item.name }}'
       data: '{{ item.data|default(None) }}'
-      datatype: '{{ item.type|default("string") }}'
+      type: '{{ item.type|default("dword") }}'
     with_items:
 
     # Disable Windows Remote UAC
-    - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
-      value: LocalAccountTokenFilterPolicy
+    - path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+      name: LocalAccountTokenFilterPolicy
       data: 1
-      datatype: dword
 
     # Disable and remove the Shut Down command (Leerling)
-#    - key: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
-#      value: NoClose
+#    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#      name: NoClose
 #      data: 1
-#      datatype: dword
 
     # Disable changing wallpaper
-    - key: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop
-      value: NoChangingWallPaper
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop
+      name: NoChangingWallPaper
       data: 1
-      datatype: dword
 
     # Enable Classic Shell
-#    - key: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
-#      value: ClassicShell
+#    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#      name: ClassicShell
 #      data: 1
-#      datatype: dword
 
     # Enable connecting and disconnecting a LAN connection
-#    - key: HKCU:\Software\Policies\Microsoft\Windows\Network Connections
-#      value: NC_LanConnect
+#    - path: HKCU:\Software\Policies\Microsoft\Windows\Network Connections
+#      name: NC_LanConnect
 #      data: 0
-#      datatype: dword
 
-  - win_shell: |
-      powercfg -change -monitor-timeout-ac 15
+  - name: Set monitor timeout to 30 minutes
+    win_shell: |
+      powercfg -change -monitor-timeout-ac 30
     tags: power
 
-  - win_shell: |
-      powercfg -change -standby-timeout-ac 60
+  - name: Set sleep timeout to 90 minutes
+    win_shell: |
+      powercfg -change -standby-timeout-ac 90
     tags: power
