@@ -1,27 +1,29 @@
+# Copyright 2017, Dag Wieers <dag@wieers.com>
+#
+# This playbook wakes up all/selected desktop systems. It is intended to be
+# used before running any Ansible maintenance playbooks system-wide.
+
 - hosts: computers
   gather_facts: no
-  connection: local
   tasks:
-  # TODO: Test wakeonlan module with different UDP ports (e.g. 9 or 0)
   # TODO: Test wakeonlan module with WoWLAN
+  # TODO: Match inventory with MAC addresses (for DHCP clients)
   - name: Send magic Wake-On-Lan packet to turn on individual systems
     wakeonlan:
-#    wakeonlan-adv:
       mac: '{{ mac }}'
-#      ip: '{{ ansible_host }}'
       broadcast: 192.168.0.255
+    delegate_to: localhost
+
+#  # Advanced idempotent implementation
+#  - wakeonlan-adv:
+#      mac: '{{ mac }}'
+#      broadcast: 192.168.234.1
+#      port: 9
 #      check_arp: no
 #      timeout: 10
-#      port: 9
+#    become: yes
+#    delegate_to: localhost
 
   - name: Wait for the system's WinRM service to come online
-    wait_for:
-      host: '{{ ansible_host }}'
-      port: 5986
-      connect_timeout: 5
-      timeout: 30
-      state: started
-
-#  - name: Wait for the system's WinRM service to come online
-#    wait_for_connection:
-#      timeout: 15
+    wait_for_connection:
+      timeout: 20
