@@ -1,13 +1,22 @@
-# Group Policies: https://msdn.microsoft.com/en-us/library/ms815238.aspx
+# Copyright 2016, Dag Wieers <dag@wieers.com>
+#
+# This playbook configures the desktop (background, icons). It is intended to
+# be used on newly installed systems. Or whenever this playbook changes.
+
+# TODO: Group Policies: https://msdn.microsoft.com/en-us/library/ms815238.aspx
 
 - hosts: computers
   gather_facts: no
 
   tasks:
+  - name: Test system connection
+    wait_for_connection:
+      timeout: 20
+
   - name: Add shortcut icons
     win_copy:
-      src: 'files/{{ item }}'
-      dest: '%Public%\Pictures\'
+      src: files/icons/{{ item }}
+      dest: '%Public%\Pictures\{{ item }}'
     with_items:
     - bingel.ico
     - computermeester.ico
@@ -17,30 +26,28 @@
   - name: Add default desktop shortcuts
     win_shortcut:
       description: '{{ item.desc }}'
-      src: '{{ item.src }}'
+      src: '{{ ansible_env["ProgramFiles(x86)"] if "ProgramFiles(x86)" in ansible_env else ansible_env.ProgramFiles }}\Google\Chrome\Application\chrome.exe'
+      args: '--new-window {{ item.url }}'
       dest: '{{ item.dest }}'
       icon: '{{ item.icon | default(",0") }}'
+      windowstyle: '{{ item.windowstyle | default("normal") }}'
       state: present
     with_items:
     - desc: ComputerMeester website
-      src: 'http://computermeester.be/'
+      url: http://computermeester.be/
       dest: '%Public%\Desktop\Computer Meester.lnk'
-      icon: '%Public%\Pictures\computermeester.ico'
+      icon: '%Public%\Pictures\computermeester.ico,0'
       windowstyle: maximized
     - desc: Bingel website
-      src: 'https://www.bingel.be/bingel/login/'
+      url: https://www.bingel.be/bingel/login/
       dest: '%Public%\Desktop\Bingel.lnk'
-      icon: '%Public%\Pictures\bingel.ico'
+      icon: '%Public%\Pictures\bingel.ico,0'
       windowstyle: maximized
     - desc: Symbaloo website
-      src: 'https://www.symbaloo.com/'
+      url: https://www.symbaloo.com/
       dest: '%Public%\Desktop\Symbaloo.lnk'
-      icon: '%Public%\Pictures\symbaloo.ico'
+      icon: '%Public%\Pictures\symbaloo.ico,0'
       windowstyle: maximized
-    - desc: Gedeelde ictadmin bestanden
-      src: '\\diskstation01\ictadmin'
-      dest: 'Desktop\ictadmin.lnk'
-      icon: '%SystemRoot%\system32\imageres.dll,117'
     tags: shortcuts
 
   - name: Add shortcuts for all computers
@@ -48,46 +55,65 @@
       desc: '{{ item.desc }}'
       src: '{{ item.src }}'
       dest: '{{ item.dest }}'
-      icon: '{{ item.icon|default(item.src) }},0'
+      icon: '{{ item.icon|default(item.src ~ ",0") }}'
     with_items:
+    - desc: Gedeelde ictadmin bestanden
+      src: \\diskstation01\ictadmin
+      dest: Desktop\ictadmin.lnk
+      icon: '%SystemRoot%\System32\imageres.dll,117'
     - desc: Mijn Documenten
-      dest: '%Public%\Desktop\Documenten.lnk'
       src: '%UserProfile%\Documents'
-      icon:
+      dest: '%Public%\Desktop\Documenten.lnk'
+      icon: ',0'
     - desc: Prullenbak
+      src: shell:RecycleBinFolder
       dest: '%Public%\Desktop\Prullenbak.lnk'
-      src: 'shell:RecycleBinFolder'
-      icon:
+      icon: ',0'
     - desc: Process Explorer
+      src: C:\ProgramData\chocolatey\bin\procexp.exe
       dest: Desktop\Process Explorer.lnk
-      src: procexp.exe
     - desc: Autoruns
+      src: C:\ProgramData\chocolatey\bin\autoruns.exe
       dest: Desktop\Autoruns.lnk
-      src: autoruns.exe
     - desc: WakeMeOnLan
-      dest: Desktop\WakeMeOnLan.lnk
       src: \\diskstation01\ictadmin\Tools\WakeMeOnLan\WakeMeOnLan.exe
-    tags:
-    - shortcuts
+      dest: Desktop\WakeMeOnLan.lnk
+    tags: shortcuts
 
-  - name: Set default system locale to nl-BE
-    raw: Set-WinSystemLocale nl-BE
+  - name: Disable Windows tiles for new users
+    win_copy:
+      src: LayoutModification.xml
+      dest: C:\Users\ictadmin\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml
+    tags: tiles
 
-  - name: Set user language setting to nl-BE
-    raw: Set-WinUserLanguageList -LanguageList nl-BE -Force
-
+  # We prefer to make the Administrator background bright red
   - name: Set red background for user ictadmin
     win_regedit:
-      key: '{{ item.key }}'
-      value: '{{ item.value }}'
+      path: '{{ item.path }}'
+      name: '{{ item.name }}'
       data: '{{ item.data }}'
       datatype: '{{ item.type }}'
     with_items:
-    - { key: 'HKCU:\Control Panel\Desktop', value: Wallpaper, data: '', type: string }
-    - { key: 'HKCU:\Control Panel\Desktop', value: WallpaperStyle, data: 10, type: string }
-    - { key: 'HKCU:\Control Panel\Colors',  value: Background, data: '232 17 35', type: string }
-    - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguages, data: 'nl-BE', type: multistring }
-#    - { key: 'HKCU:\Control Panel\Desktop', value: PreferredUILanguagesPending, data: 'nl-BE', type: multistring }
+    - path: HKCU:\Control Panel\Desktop
+      name: Wallpaper
+      data: ''
+      type: string
+    - path: HKCU:\Control Panel\Desktop
+      name: WallpaperStyle
+      data: 10
+      type: string
+    - path: HKCU:\Control Panel\Colors
+      name: Background
+      data: '232 17 35'
+      type: string
+    - path: HKCU:\Control Panel\Desktop
+      name: PreferredUILanguages
+      data: 'nl-BE'
+      type: multistring
+#    -path: HKCU:\Control Panel\Desktop
+#     name: PreferredUILanguagesPending
+#     data: 'nl-BE'
+#     type: multistring
     tags:
     - bg
     - ictadmin
@@ -98,29 +124,30 @@
       dest: '{{ item }}'
       state: absent
     with_items:
-    - 'C:\Users\leerling\Desktop\WinDirStat.lnk'
-    - '%Public%\Desktop\KeePass 2.lnk'
+    - C:\Users\leerling\Desktop\WinDirStat.lnk
     - '%Public%\Desktop\Audacity.lnk'
     - '%Public%\Desktop\CDex.lnk'
     - '%Public%\Desktop\Google Chrome.lnk'
     - '%Public%\Desktop\Google Earth.lnk'
     - '%Public%\Desktop\Inkscape.lnk'
-    - '%Public%\Desktop\InfraRecorder.lnk'
+    - '%Public%\Desktop\Inkscape 0.92.1.lnk'
+#    - '%Public%\Desktop\InfraRecorder.lnk'
+#    - '%Public%\Desktop\KeePass 2.lnk'
     - '%Public%\Desktop\LibreOffice 5.1.lnk'
     - '%Public%\Desktop\LibreOffice 5.2.lnk'
+    - '%Public%\Desktop\LibreOffice 5.3.lnk'
     - '%Public%\Desktop\Mozilla Firefox.lnk'
     - '%Public%\Desktop\VLC media player.lnk'
-    - 'Desktop\ictadmin (I).lnk'
     tags:
     - cleanup
     - shortcuts
 
-- hosts: computerlokaal
+- hosts: computerlokaal:technieklokaal
   tasks:
   - name: Move files on Desktop to Documents
 #    win_shell: Move-Item %userprofile%\Desktop\*.* %userprofile%\Documents\ -Force
 #    become_user: leerling
-    win_shell: Move-Item C:\Users\leerling\Desktop\* C:\users\leerling\Documents\ -Force
+    win_shell: Move-Item C:\Users\leerling\Desktop\* C:\Users\leerling\Documents\ -Force
     failed_when: no
     tags:
     - cleanup
@@ -131,25 +158,57 @@
       desc: '{{ item.desc }}'
       src: '{{ item.src }}'
       dest: '{{ item.dest }}'
-      icon: '%SystemRoot%\system32\imageres.dll,{{ item.idx }}'
+      icon: '%SystemRoot%\System32\imageres.dll,{{ item.idx }}'
     with_items:
-    - { desc: Gedeelde muziek bestanden,   dest: 'Desktop\Muziek.lnk',   src: '\\diskstation01\music',    idx: 103 }
-    - { desc: Gedeelde video bestanden,    dest: 'Desktop\Video.lnk',    src: '\\diskstation01\video',    idx: 178 }
+    - desc: Gedeelde muziek bestanden
+      dest: Desktop\Muziek.lnk
+      src: \\diskstation01\music
+      idx: 103
+    - desc: Gedeelde video bestanden
+      dest: Desktop\Video.lnk
+      src: \\diskstation01\video
+      idx: 178
     tags:
     - shares
     - shortcuts
 
-- hosts: klaslokaal:gang:administratie
+- hosts: klaslokaal:gang:beheer
   tasks:
   - name: Add Music/Video shortcuts
     win_shortcut:
       desc: '{{ item.desc }}'
       src: '{{ item.src }}'
       dest: '{{ item.dest }}'
-      icon: '%SystemRoot%\system32\imageres.dll,{{ item.idx }}'
+      icon: '%SystemRoot%\System32\imageres.dll,{{ item.idx }}'
     with_items:
-    - { desc: Gedeelde muziek bestanden, dest: '%Public%\Desktop\Muziek.lnk', src: '\\diskstation01\music', idx: 103 }
-    - { desc: Gedeelde video bestanden,  dest: '%Public%\Desktop\Video.lnk',  src: '\\diskstation01\video', idx: 178 }
+    - desc: Gedeelde muziek bestanden
+      dest: '%Public%\Desktop\Muziek.lnk'
+      src: \\diskstation01\music
+      idx: 103
+    - desc: Gedeelde video bestanden
+      dest: '%Public%\Desktop\Video.lnk'
+      src: \\diskstation01\video
+      idx: 178
     tags:
     - shares
     - shortcuts
+
+# Add KeePass shortcut for all users on admin systems
+- hosts: beheer
+  tasks:
+  - name: Add KeePass shortcuts
+    win_shortcut:
+      desc: KeePass Password Safe 2
+      dest: '%Public%\Desktop\KeePass 2.lnk'
+      src: C:\Program Files (x86)\KeePass Password Safe 2\KeePass.exe
+    tags: keepass
+
+# Add KeePass shortcut for user ictadmin on all other systems
+- hosts: computers:!beheer
+  tasks:
+  - name: Add KeePass shortcuts
+    win_shortcut:
+      desc: KeePass Password Safe 2
+      dest: Desktop\KeePass 2.lnk
+      src: C:\Program Files (x86)\KeePass Password Safe 2\KeePass.exe
+    tags: keepass
