@@ -1,18 +1,37 @@
+# Copyright 2017, Dag Wieers <dag@wieers.com>
+#
+# This playbook cleans up a Windows 10 system. It is intended to be used on
+# systems on a regular basis to clean up disk space and remove stale software.
+
 - hosts: computers
   gather_facts: no
-  strategy: free
   tasks:
+  - name: Test system connection
+    wait_for_connection:
+      timeout: 20
+    tags: software
+
+  - name: Clean chocolatey/nuget cache
+    win_file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+    - '%UserProfile%\AppData\Local\Temp\chocolatey\'
+    - '%UserProfile%\AppData\Local\Temp\nuget\'
+    - '%UserProfile%\AppData\Local\NuGet\Cache\'
+    tags: cache
+
   - name: Remove unwanted software using Chocolatey
     win_chocolatey:
       name: '{{ item }}'
       state: absent
     with_items:
+    - adblockplusfirefox
     - adobeair
 #    - adobereader-de
 #    - adobereader
 #    - adobereader-update
     - adobeshockwaveplayer
-    - autohotkey
     - autoruns
     - avastbrowsercleanup
     - avastfreeantivirus
@@ -24,6 +43,7 @@
     - flashplayerplugin
     - flashplayeractivex
     - freerdp
+    - libreoffice
     - openoffice
     - procexp
     - quicktime
@@ -32,7 +52,7 @@
     - chocolatey
     - software
 
-- hosts: computerlokaal
+- hosts: computerlokaal:gang:technieklokaal
   strategy: free
   tasks:
   - name: Remove software
@@ -57,38 +77,97 @@
 #    - Hearts
 #    - Internet-Explorer-Optional-amd64
 
-- hosts: all
+- hosts: computerlokaal
   tasks:
-  - win_shell: |
-      Get-AppxPackage {{ item }} | Remove-AppxPackage
-    with_items:
-    - 'Microsoft.WindowsAlarms*'
-    - Microsoft.People
-    - Microsoft.ConnectivityStore
-    - Microsoft.WindowsStore
-    - Microsoft.XboxApp
-    - E046963F.LenovoCompanion
-    - Microsoft.WindowsMaps
-    - Microsoft.ZuneVideo
-    - Microsoft.3DBuilder
-    - Microsoft.Office.Sway
-    - Microsoft.WindowsCamera
-    - Microsoft.ZuneMusic
-    - Microsoft.windowscommunicationsapps
-    - Microsoft.CommsPhone
-    - Microsoft.Windows.Photos
-    - Microsoft.BingFinance
-    - Microsoft.BingNews
-    - Microsoft.MicrosoftSolitaireCollection
-    - Microsoft.BingSports
-    - Microsoft.BingWeather
-    - '*CandyCrush*'
-    tags:
-    - appx
-    - windows
+  - name: Remove all Appx packages for user leerling
+    win_shell: |
+      Get-AppxPackage | Remove-AppxPackage
+    register: appx
+    changed_when: "'Deployment operation progress: ' in appx.stderr"
+    failed_when: no
+    become: leerling
+    tags: appx
 
-  - raw: powercfg -change -monitor-timeout-ac 15
-  - raw: powercfg -change -standby-timeout-ac 60
+  - name: Remove all Appx packages for user leerling
+    win_shell: |
+      Get-AppxPackage -User leerling | Remove-AppxPackage
+    register: appx
+    changed_when: "'Deployment operation progress: ' in appx.stderr"
+    failed_when: no
+    tags: appx
+
+- hosts: computers
+  tasks:
+  - name: Remove all Appx packages for this user
+    win_shell: |
+      Get-AppxPackage | Remove-AppxPackage
+      #Get-AppxPackage -AllUsers | Remove-AppxPackage
+    register: appx
+    changed_when: "'Deployment operation progress: ' in appx.stderr"
+    failed_when: no
+    tags: appx
+
+  - name: Remove all Appx provisioned packages
+    win_shell: |
+      Get-AppxProvisionedPackage -Online | Remove-AppxProvisionedPackage -Online
+    register: appx
+#    changed_when: "'Deployment operation progress: ' in appx.stderr"
+    failed_when: no
+    become: yes
+    tags: appx
+
+#- hosts: computers
+#  tasks:
+#  - win_shell: |
+#      Get-AppxPackage -AllUsers -Name {{ item }} | Remove-AppxPackage
+#      #Get-AppxPackage -Name {{ item }} | Remove-AppxPackage
+#    with_items:
+#    - 4DF9E0F8.Netflix
+#    - 9E2F88E3.Twitter
+#    - '*CandyCrush*'
+#    - E046963F.LenovoCompanion
+#    - Microsoft.3DBuilder
+#    - Microsoft.Advertising.Xaml
+#    - Microsoft.Appconnector
+#    - Microsoft.BingFinance
+#    - Microsoft.BingNews
+#    - Microsoft.BingSports
+#    - Microsoft.BingWeather
+#    - Microsoft.CommsPhone
+#    - Microsoft.ConnectivityStore
+#    - Microsoft.DesktopAppInstaller
+#    - Microsoft.Getstarted
+#    - Microsoft.Messaging
+#    - Microsoft.MicrosoftOfficeHub
+#    - Microsoft.MicrosoftSolitaireCollection
+#    - Microsoft.Office.OneNote
+#    - Microsoft.Office.Sway
+#    - Microsoft.OneConnect
+#    - Microsoft.People
+#    - Microsoft.Services.Store.Engagement
+#    - Microsoft.SkypeApp
+#    - Microsoft.StorePurchaseApp
+#    - Microsoft.WindowsAlarms
+#    - Microsoft.WindowsCamera
+#    - Microsoft.windowscommunicationsapps
+#    #- Microsoft.WindowsDVDPlayer
+#    - Microsoft.WindowsFeedbackHub
+#    - Microsoft.WindowsMaps
+#    - Microsoft.WindowsPhone
+#    - Microsoft.Windows.Photos
+#    - Microsoft.WindowsStore
+#    - Microsoft.XboxApp
+#    - Microsoft.XboxIdentityProvider
+#    - Microsoft.ZuneMusic
+#    - Microsoft.ZuneVideo
+#    - TuneIn.TuneInRadio
+#    register: appx
+#    changed_when: "'Deployment operation progress: ' in appx.stderr"
+##    failed_when: no
+#    tags:
+#    - appx
+#    - windows
+
 #  - raw: >
 #      $e = (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}')
 #      $e.Items() | %{$_.Verbs()} | ?{$_.Name.replace('&','') -match 'Unpin from Start'} | %{$_.DoIt()}
