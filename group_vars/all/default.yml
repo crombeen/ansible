@@ -1,0 +1,23 @@
+ansible_connection: winrm
+ansible_port: 5986
+ansible_username: ictadmin
+ansible_password: '{{ ansible_winrm_password }}'
+
+ansible_winrm_scheme: https
+ansible_winrm_server_cert_validation: ignore
+#ansible_winrm_transport: credssp
+ansible_winrm_transport: ssl
+#ansible_winrm_transport: plaintext
+#ansible_winrm_transport: certificate
+#ansible_winrm_transport: ntlm
+ansible_winrm_username: ictadmin
+ansible_winrm_operation_timeout_sec: 180
+ansible_winrm_read_timeout_sec: 360
+#
+#ansible_winrm_cert_pem: /home/dag/home-made/crombeen/certs/winrm_client_cert.pub.pem
+#ansible_winrm_cert_key_pem: /home/dag/home-made/crombeen/certs/winrm_client_cert.prv.pem
+#ansible_winrm_verify: false
+
+ansible_become_method: runas
+ansible_become_user: ictadmin
+ansible_become_password: '{{ ansible_password }}'
