@@ -1,0 +1,50 @@
+# Copyright 2017, Dag Wieers <dag@wieers.com>
+
+# This playbook installs the initial software collection. It is intended to
+# be used on newly installed systems. Or whenever this playbook changes.
+
+- hosts: computers
+#  strategy: free
+  tasks:
+  # NOTE: Installation of Chocolatey is taken care of win_chocolatey
+  - name: Install chocolatey/powershell on new systems
+    win_chocolatey:
+      name: powershell
+      state: present
+    tags: powershell
+
+  - name: Install extra software
+    win_chocolatey:
+      name: '{{ item }}'
+      state: present
+    with_items:
+    - 7zip
+    - audacity
+#    - cdex
+    - chocolateygui
+    - firefox
+    - gimp
+    - googlechrome
+#    - googleearth
+    - infrarecorder
+    - inkscape
+    - keepass.install
+    - libreoffice-oldstable
+    - notepadplusplus
+    - rdpwrapper
+    - sysinternals
+    - tipp10
+    - vlc
+    - windirstat
+    - adblockplus-firefox
+    - adblockplusie
+    - adblockpluschrome
+    tags: software
+
+- hosts: computer26:computer41:computer48
+  tasks:
+  - name: Install dropbox
+    win_chocolatey:
+      name: dropbox
+      state: latest
+  tags: dropbox
