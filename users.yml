@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: computers
   tasks:
   - name: Create local "Users" group
     win_group:
@@ -10,7 +10,7 @@
     win_user:
       fullname: ICT Administrator
       name: ictadmin
-      description: Used for Ansible automated tasks by the IWT Werkgroep
+      description: Used for Ansible automated tasks by the ICT Werkgroep
 #      password: '{{ ictadmin_password }}'
       groups: [ Administrators ]
       state: present
@@ -33,7 +33,7 @@
       name: leerling
       state: absent
 
-- hosts: computerlokaal:gang
+- hosts: computerlokaal:gang:technieklokaal
   tasks:
 #  - win_user:
 #      name: '{{ item }}'
@@ -42,6 +42,12 @@
 #    - '{{ inventory_hostname }}'
 #    - computer {{ inventory_hostname[-2:] }}
 #    - school{{ inventory_hostname[-1:] }}
+
+#  - name: Create local "Visitor" group
+#    win_group:
+#      name: Visitor
+#      description: Visitors
+#      state: present
 
   - name: Disable local "Administrator" user
     win_user:
@@ -53,7 +59,7 @@
     win_user:
       fullname: Leerling
       name: leerling
-#      password: ''
+#      password: '1234'
       description: Gedeelde gebruiker door de leerlingen van basisschool Crombeen
       account_disabled: no
       account_locked: no
