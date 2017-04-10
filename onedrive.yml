@@ -1,53 +1,79 @@
-- hosts: computerlokaal:computer53
+- hosts: computers:!computer08:!computer23:!computer47:!computer48:!computer49:!computer60
   gather_facts: no
   tasks:
   - name: Configuration
     win_regedit:
-      key: '{{ item.key }}'
-      value: '{{ item.value }}'
+      path: '{{ item.path }}'
+      name: '{{ item.name }}'
       data: '{{ item.data|default(None) }}'
-      datatype: '{{ item.type|default("string") }}'
+      type: '{{ item.type|default("string") }}'
+      state: '{{ item.state|default("present") }}'
     with_items:
 
-    # Network configuration
-    # Remove OneDrive from Run
-    - key: HKLM:\Software\Microsoft\Windows\CurrentVersion\Run
-      value: OneDrive
+    # Remove OneDrive from Run hook for new users
+    - path: HKU:\Default\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+      name: OneDrive
       state: absent
 
-    # Disable OneDrive (32bit)
-    - key: HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
-      value: System.IsPinnedToNameSpaceTree
-      data: 0
-      datatype: dword
+    # Remove OneDrive from Run hook for current user
+    - path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Run
+      name: OneDrive
+      state: absent
 
-    - key: HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
-      value: System.IsPinnedToNameSpaceTree
+    # Remove OneDrive from Explorer Name Space Tree (32bit)
+    - path: HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
+      name: System.IsPinnedToNameSpaceTree
       data: 0
-      datatype: dword
+      type: dword
+
+    # Remove OneDrive from Explorer Name Space Tree (64bit)
+    - path: HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}
+      name: System.IsPinnedToNameSpaceTree
+      data: 0
+      type: dword
+
+    - path: HKLM:\Software\Policies\Microsoft\Windows\OneDrive
+      name: DisableFileSyncNGSC
+      data: 1
+      type: dword
+
+    - path: HKLM:\Software\Wow6432Node\Policies\Microsoft\Windows\OneDrive
+      name: DisableFileSyncNGSC
+      data: 1
+      type: dword
     tags:
     - onedrive
 
   - name: Remove OneDrive (1)
-    win_psexec:
-      command: taskkill /f /im OneDrive.exe
-      system: yes
+    win_shell: |
+      taskkill.exe /F /IM OneDrive.exe
+#      taskkill.exe /F /IM explorer.exe
+    register: taskkill
+    changed_when: taskkill.rc == 0 and '"The process \"OneDrive.exe\" not found." not in taskkill.stderr'
+    failed_when: taskkill.rc != 0 and 'The process "OneDrive.exe" not found.' not in taskkill.stderr
     ignore_errors: yes
     tags:
     - onedrive
 
   - name: Remove OneDrive (2)
-    win_psexec:
-      command: C:\Windows\System32\OneDriveSetup.exe /uninstall
-      system: yes
+    win_shell: |
+      %SYSTEMROOT%\System32\OneDriveSetup.exe /uninstall
+      %SYSTEMROOT%\SysWOW64\OneDriveSetup.exe /uninstall
     ignore_errors: yes
     tags:
     - onedrive
 
-  - name: Remove OneDrive (3)
-    win_psexec:
-      command: C:\Windows\SysWOW64\OneDriveSetup.exe /uninstall
-      system: yes
-    ignore_errors: yes
-    tags:
-    - onedrive
+  - name: Remove OneDrive leftovers
+    win_file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+    - '%LOCALAPPDATA%\Microsoft\OneDrive'
+    - '%PROGRAMDATA%\Microsoft OneDrive'
+    - '%USERPROFILE%\OneDrive'
+    - 'C:\OneDriveTemp'
+    - '%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk'
+
+  - name: Restart explorer
+    win_shell:
+      explorer.exe
