@@ -1,88 +1,114 @@
 - hosts: computers
   tasks:
+  - name: Test system connection
+    wait_for_connection:
+      timeout: 20
+
   - name: Ensure rdpwrap is installed
     win_chocolatey:
       name: rdpwrapper
-      state: '{{ "absent" if ansible_os_name == "Windows 10 Pro" else "present" }}'
+      state: present
+#      state: '{{ "absent" if ansible_os_name == "Windows 10 Pro" else "present" }}'
+
+  # This doesn't work for all systems :-/
+  - name: Ensure we are on a private network
+    win_shell: |
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias LAN-Verbinding
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias Ethernet
+    ignore_errors: yes
 
   # Only do this for non-Pro versions
-  - block:
-    - name: Update rdpwrap config
-      win_psexec:
-        command: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe -w
-        system: yes
-      changed_when: no
+#  - name: Run update.bat
+#    win_shell: cmd.exe /C C:\ProgramData\chocolatey\lib\rdpwrapper\tools\update.bat
+#    changed_when: no
+#    ignore_errors: yes
 
-    # Reimplement RDPConf.exe in Ansible
-    - name: Configure RDP firewall rule
-      win_firewall_rule:
-        name: RemoteDesktop-UserMode-In-TCP
-        enable: yes
-        state: present
-        localport: 3389
-        action: allow
-        direction: In
-        protocol: TCP
-        profile: private
-      register: fw
-      changed_when: '"An identical rule exists" not in fw.msg'
-      failed_when: fw|failed and "An identical rule exists" not in fw.msg
-      ignore_errors: yes
-      tags: firewall
-
-    - name: Enable Terminal Server
-      win_regedit:
-        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server
-        name: '{{ item.name }}'
-        data: '{{ item.data }}'
-        type: dword
-      with_items:
-      - { name: fDenyTSConnections,    data: 0 }
-      - { name: fSingleSessionPerUser, data: 0 }
-      tags:
-      - registry
-
-    - name: Set RDP/tcp settings
-      win_regedit:
-        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
-        name: '{{ item.name }}'
-        data: '{{ item.data }}'
-        type: dword
-      with_items:
-      - { name: PortNumber,         data: 3389 }
-      - { name: SecurityLayer,      data: 1 }
-      - { name: UserAuthentication, data: 0 }
-      - { name: Shadow,             data: 1 }
-      tags:
-      - registry
-
-    - name: Set Terminal Services Shadow
-      win_regedit:
-        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services
-        name: Shadow
-        data: 1
-        type: dword
-      tags:
-      - registry
-
-    - name: Set normal user selection on boot
-      win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
-        name: dontdisplaylastusername
-        data: 0
-        type: dword
-      tags:
-      - hideuser
-      - registry
-
-     # Restarting TermService is not required
-#    - win_service:
-#        name: TermService
-#        state: restarted
-#        force: yes
-#      tags: service
-
-     # Reboot is not required
-#    - win_reboot:
-
+  # Only do this for non-Pro versions
+  - name: Update rdpwrap config
+    win_psexec:
+      command: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe -w
+      system: yes
+    changed_when: no
+    ignore_errors: yes
     when: ansible_os_name != "Windows 10 Pro"
+    tags: update
+
+  - name: Ensure RDPWInst.exe is run daily
+    win_scheduled_task:
+      name: RDPWinst
+      description: Update RDPwrap config
+      executable: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe
+      arguments: -w
+      time: 5pm
+      frequency: daily
+      enabled: yes
+      user: SYSTEM
+
+  # Reimplement RDPConf.exe in Ansible
+  - name: Configure RDP firewall rule
+    win_firewall_rule:
+      name: Remote Desktop
+      localport: 3389
+      action: allow
+      direction: in
+      protocol: TCP
+#      service:
+      profile: private
+#      force: yes
+      state: present
+      enable: yes
+    register: fw
+    changed_when: '"An identical rule exists" not in fw.msg and "The rule exists but has different values" not in fw.msg'
+    failed_when: fw|failed or "An identical rule exists" not in fw.msg
+    ignore_errors: yes
+    tags: firewall
+
+  - name: Enable Terminal Server
+    win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server
+      name: '{{ item.name }}'
+      data: '{{ item.data }}'
+      type: dword
+    with_items:
+    - { name: fDenyTSConnections,    data: 0 }
+    - { name: fSingleSessionPerUser, data: 0 }
+    tags: registry
+
+  - name: Set RDP/tcp settings
+    win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+      name: '{{ item.name }}'
+      data: '{{ item.data }}'
+      type: dword
+    with_items:
+    - { name: PortNumber,         data: 3389 }
+    - { name: SecurityLayer,      data: 1 }
+    - { name: UserAuthentication, data: 0 }
+    - { name: Shadow,             data: 1 }
+    tags: registry
+
+  - name: Set Terminal Services Shadow
+    win_regedit:
+      path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services
+      name: Shadow
+      data: 1
+      type: dword
+    tags: registry
+
+  - name: Set normal user selection on boot
+    win_regedit:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+      name: dontdisplaylastusername
+      data: 0
+      type: dword
+    tags: registry
+
+  - name: Ensure Terminal Services is running
+    win_service:
+      name: TermService
+      state: started
+      force: yes
+    tags: service
+
+   # Reboot is not required
+#  - win_reboot:
