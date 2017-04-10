@@ -1,75 +1,27 @@
 - hosts: computers
-  strategy: free
+  gather_facts: no
   tasks:
-  - name: Install chocolatey on new systems
-    raw: 'iex ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))'
-    when: ansible_env.ChocolateyInstall is undefined
-    tags: software
+  - name: Upgrade existing software
+    win_chocolatey:
+      name: all
+      state: latest
 
-#  - name: Install powershell on new systems
+#  - name: Install/remove java
 #    win_chocolatey:
 #      name: '{{ item }}'
-#      state: present
-#    when: ansible_env.ChocolateyInstall is undefined
+#      state: '{{ "present" if inventory_hostname in groups["administratie"] else "absent" }}'
 #    with_items:
-#    - powershell
-#    - pswindowsupdate
+#    - javaruntime-preventasktoolbar
+#    - jre8
 
-  - name: Install extra software
-    win_chocolatey:
-      name: '{{ item }}'
-      state: present
-      upgrade: yes
-    with_items:
-    - 7zip
-    - audacity
-    - cdex
-    - chocolateygui
-    - firefox
-    - gimp
-    - googlechrome
-#    - googleearth
-    - infrarecorder
-    - inkscape
-    - keepass.install
-    - libreoffice
-    - notepadplusplus
-    - rdpwrapper
-    - sysinternals
-    - tipp10
-    - vlc
-    - windirstat
-    - adblockplus-firefox
-    - adblockplusie
-    - adblockpluschrome
-    tags: software
+#  - name: Install Windows updates
+#    win_updates:
+#      state: installed
 
-  - name: Install/remove java
-    win_chocolatey:
-      name: '{{ item }}'
-      state: '{{ "present" if inventory_hostname in groups["administratie"] else "absent" }}'
-    with_items:
-    - javaruntime-preventasktoolbar
-    - jre8
-
-- hosts: computer26:computer41:computer48
+- hosts: computer23:computer26:computer41:computer43:computer48
   tasks:
   - name: Install dropbox
     win_chocolatey:
       name: dropbox
-      state: present
+      state: latest
   tags: dropbox
-
-- hosts: computerlokaal
-  tasks:
-  - name: Remove software
-    raw: $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"; $app.Uninstall();
-    with_items:
-    - Adobe AIR
-    - Acrobat Reader X
-    - Lenovo Solution Center
-    - SDK Debuggers
-
-  - name: Install Windows updates
-    win_updates:
-      state: installed
