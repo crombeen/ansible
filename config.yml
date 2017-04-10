@@ -93,6 +93,15 @@
 #      name: Hotkey
 #      data: 3
 
+    - path: HKCU:\Control Panel\Desktop
+      name: PreferredUILanguages
+      data: 'nl-BE'
+      type: multistring
+#    -path: HKCU:\Control Panel\Desktop
+#     name: PreferredUILanguagesPending
+#     data: 'nl-BE'
+#     type: multistring
+
     # Windows 10 Registry Hacks: https://ss64.com/nt/syntax-reghacks.html
 
     # System Tray - Show all icons (The default for this can be set under HKLM)
@@ -109,7 +118,7 @@
     # Show all folders in Explorer including Recycle Bin, Desktop, Control Panel
     - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
       name: NavPaneShowAllFolders
-      data: 1
+      data: 0
 
     # Show hidden files and folders
     - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
@@ -156,6 +165,11 @@
       name: AllowCortana
       data: 0
 
+    # Enable lock timeout settings
+#    - path: HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\7516b95f-f776-4464-8c53-06167f40cc99\8EC4B3A5-6868-48c2-BE75-4F3044BE88A7
+#      name: Attributes
+#      data: 2
+
     tags: registry
 
   - name: Set default system locale to nl-BE
@@ -169,7 +183,7 @@
     win_domain_membership:
       hostname: '{{ inventory_hostname_short|lower }}'
       dns_domain_name: crombeen.internal
-      workgroup_name: CROMBEEN
+      workgroup_name: CROMBEENGROUP
       domain_admin_user: '{{ ansible_winrm_username }}'
       domain_admin_password: '{{ ansible_winrm_password }}'
       state: workgroup
@@ -186,34 +200,6 @@
       - 195.238.2.22
       - 192.168.0.254
     tags: dns
-
-  - name: Disable default services
-    win_service:
-      name: '{{ item }}'
-      start_mode: disabled
-      state: stopped
-    with_items:
-    - diagnosticshub.standardcollector.service # Microsoft (R) Diagnostics Hub Standard Collector Service
-    - DiagTrack                                # Diagnostics Tracking Service
-    - dmwappushservice                         # WAP Push Message Routing Service (see known issues)
-    - HomeGroupListener                        # HomeGroup Listener
-    - HomeGroupProvider                        # HomeGroup Provider
-    - lfsvc                                    # Geolocation Service
-    - MapsBroker                               # Downloaded Maps Manager
-    - NetTcpPortSharing                        # Net.Tcp Port Sharing Service
-    - RemoteAccess                             # Routing and Remote Access
-    - RemoteRegistry                           # Remote Registry
-    - SharedAccess                             # Internet Connection Sharing (ICS)
-    - TrkWks                                   # Distributed Link Tracking Client
-    - WbioSrvc                                 # Windows Biometric Service
-    #- WlanSvc                                 # WLAN AutoConfig
-    - WMPNetworkSvc                            # Windows Media Player Network Sharing Service
-    #- wscsvc                                   # Windows Security Center Service
-    #- WSearch                                 # Windows Search
-    - XblAuthManager                           # Xbox Live Auth Manager
-    - XblGameSave                              # Xbox Live Game Save Service
-    - XboxNetApiSvc                            # Xbox Live Networking Service
-    tags: services
 
   - name: Configure time zone
     win_timezone:
@@ -332,3 +318,38 @@
     win_shell: |
       powercfg -change -standby-timeout-ac 90
     tags: power
+
+#  - name: Set lock timeout to 90 minutes
+#    win_shell: |
+#      powercfg.exe /SETACVALUEINDEX SCHEME_CURRENT SUB_VIDEO VIDEOCONLOCK 60
+#      powercfg.exe /SETACTIVE SCHEME_CURRENT
+#    tags: power
+
+  - name: Disable default services
+    win_service:
+      name: '{{ item }}'
+      start_mode: disabled
+      state: stopped
+    with_items:
+    - diagnosticshub.standardcollector.service # Microsoft (R) Diagnostics Hub Standard Collector Service
+    - DiagTrack                                # Diagnostics Tracking Service
+    - dmwappushservice                         # WAP Push Message Routing Service (see known issues)
+    - HomeGroupListener                        # HomeGroup Listener
+    - HomeGroupProvider                        # HomeGroup Provider
+    - lfsvc                                    # Geolocation Service
+    - MapsBroker                               # Downloaded Maps Manager
+    - NetTcpPortSharing                        # Net.Tcp Port Sharing Service
+    - RemoteAccess                             # Routing and Remote Access
+    - RemoteRegistry                           # Remote Registry
+    - SharedAccess                             # Internet Connection Sharing (ICS)
+    - TrkWks                                   # Distributed Link Tracking Client
+    - WbioSrvc                                 # Windows Biometric Service
+    #- WlanSvc                                 # WLAN AutoConfig
+    - WMPNetworkSvc                            # Windows Media Player Network Sharing Service
+    #- wscsvc                                   # Windows Security Center Service
+    #- WSearch                                 # Windows Search
+    - XblAuthManager                           # Xbox Live Auth Manager
+    - XblGameSave                              # Xbox Live Game Save Service
+    - XboxNetApiSvc                            # Xbox Live Networking Service
+    tags: services
+
