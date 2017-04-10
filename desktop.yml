@@ -80,11 +80,11 @@
       dest: Desktop\WakeMeOnLan.lnk
     tags: shortcuts
 
-  - name: Disable Windows tiles for new users
-    win_copy:
-      src: LayoutModification.xml
-      dest: C:\Users\ictadmin\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml
-    tags: tiles
+#  - name: Disable Windows tiles for new users
+#    win_copy:
+#      src: LayoutModification.xml
+#      dest: C:\Users\ictadmin\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml
+#    tags: tiles
 
   # We prefer to make the Administrator background bright red
   - name: Set red background for user ictadmin
@@ -92,7 +92,7 @@
       path: '{{ item.path }}'
       name: '{{ item.name }}'
       data: '{{ item.data }}'
-      datatype: '{{ item.type }}'
+      type: '{{ item.type }}'
     with_items:
     - path: HKCU:\Control Panel\Desktop
       name: Wallpaper
@@ -106,14 +106,6 @@
       name: Background
       data: '232 17 35'
       type: string
-    - path: HKCU:\Control Panel\Desktop
-      name: PreferredUILanguages
-      data: 'nl-BE'
-      type: multistring
-#    -path: HKCU:\Control Panel\Desktop
-#     name: PreferredUILanguagesPending
-#     data: 'nl-BE'
-#     type: multistring
     tags:
     - bg
     - ictadmin
