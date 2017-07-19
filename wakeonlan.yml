@@ -6,13 +6,20 @@
 - hosts: computers
   gather_facts: no
   tasks:
-  # TODO: Test wakeonlan module with WoWLAN
-  # TODO: Match inventory with MAC addresses (for DHCP clients)
-  - name: Send magic Wake-On-Lan packet to turn on individual systems
-    wakeonlan:
+
+  - name: Send magic Wake-On-Lan packet to turn on individual systems via gateway
+    win_wakeonlan:
       mac: '{{ mac }}'
       broadcast: 192.168.0.255
-    delegate_to: localhost
+    delegate_to: '{{ wake_server | default("computer59") }}'
+
+  # TODO: Test wakeonlan module with WoWLAN
+  # TODO: Match inventory with MAC addresses (for DHCP clients)
+#  - name: Send magic Wake-On-Lan packet to turn on individual systems
+#    wakeonlan:
+#      mac: '{{ mac }}'
+#      broadcast: 192.168.0.255
+#    delegate_to: localhost
 
 #  # Advanced idempotent implementation
 #  - wakeonlan-adv:
