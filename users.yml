@@ -12,6 +12,8 @@
       name: ictadmin
       description: Used for Ansible automated tasks by the ICT Werkgroep
 #      password: '{{ ictadmin_password }}'
+      password_expired: no
+      password_never_expires: yes
       groups: [ Administrators ]
       state: present
 
@@ -26,6 +28,7 @@
       account_disabled: no
       groups: [ Users, Gebruikers ]
       password_expired: no
+      password_never_expires: yes
       state: present
 
   - name: Remove local "leerling" user
@@ -66,5 +69,5 @@
       groups: [ Users ]
       user_cannot_change_password: yes
       password_expired: no
-      password_never_expires: no
+      password_never_expires: yes
       state: present
