@@ -1,0 +1,69 @@
+- hosts: computers
+  tasks:
+  - name: Test system connection
+    wait_for_connection:
+      timeout: 20
+
+#  - name: Download VNC Connect
+#    win_get_url:
+#      url: https://www.realvnc.com/download/file/vnc.files/VNC-Server-6.2.0-Windows.exe
+#      dest: '%USERPROFILE%\Downloads\VNC-Server-6.2.0-Windows.exe'
+#
+#  - name: Install VNC Connect
+#    win_package:
+#      path: '%USERPROFILE%\Downloads\tigervnc64-1.8.0.exe'
+#      arguments: /qn REBOOT=ReallySuppress ENABLEAUTOUPDATECHECKS=1 ENABLEANALYTICS=1
+
+#  - name: Install VNC Connect
+#    win_package:
+#      product_id: '{9236C00E-10E1-46C2-829B-8FA8D5F97EE3}'
+#      path: '%USERPROFILE%\Downloads\VNC-Server-6.2.0-Windows.exe'
+#      arguments: /qn REBOOT=ReallySuppress ENABLEAUTOUPDATECHECKS=1 ENABLEANALYTICS=1
+
+#  - name: Install VNC Connect
+#    win_psexec:
+#      command: 'C:\Users\ictadmin\Downloads\VNC-Server-6.2.0-Windows.exe /qn REBOOT=ReallySuppress ENABLEAUTOUPDATECHECKS=1 ENABLEANALYTICS=1'
+#      elevated: yes
+
+  - name: Install TigerVNC
+    win_chocolatey:
+      name: tigervnc
+#      version: '1.8.0'
+      state: latest
+
+  - name: Configure TigerVNC
+    win_regedit:
+      path: HKLM:\SOFTWARE\TigerVNC\WinVNC4
+      name: '{{ item.name }}'
+      data: '{{ item.data }}'
+      type: '{{ item.type|default("dword") }}'
+    with_items:
+    - { name: AlwaysShared,        data: 1 }
+    - { name: DisableEffects,      data: 1 }
+    - { name: HTTPPortNumber,      data: 0 }
+    - { name: NeverShared,         data: 0 }
+    - { name: Password,            data: '{{ vnc_password }}', type: binary }
+    - { name: QueryConnect,        data: 0 }
+    - { name: QueryOnlyIfLoggedOn, data: 0 }
+    - { name: RemoveWallpaper,     data: 1 }
+    - { name: SecurityTypes,       data: 'VeNCrypt,TLSVnc', type: string }
+    tags: registry
+
+  - name: Configure TigerVNC firewall rule
+    win_firewall_rule:
+      name: VNC Server
+      localport: 5900
+      action: allow
+      direction: in
+      protocol: TCP
+      profile: private
+      enable: yes
+    tags: firewall
+
+  - name: Ensure TigerVNC is running
+    win_service:
+      name: TigerVNC
+      startmode: auto
+      state: started
+      force_dependent_services: yes
+    tags: service
