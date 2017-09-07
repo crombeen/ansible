@@ -12,15 +12,7 @@
     win_wakeonlan:
       mac: '{{ mac }}'
       broadcast: 192.168.0.255
-    delegate_to: '{{ wake_server | default("computer39") }}'
-
-  # TODO: Test wakeonlan module with WoWLAN
-  # TODO: Match inventory with MAC addresses (for DHCP clients)
-#  - name: Send magic Wake-On-Lan packet to turn on individual systems
-#    wakeonlan:
-#      mac: '{{ mac }}'
-#      broadcast: 192.168.0.255
-#    delegate_to: localhost
+    delegate_to: '{{ wake_server | default("computer31") }}'
 
 #  # Advanced idempotent implementation
 #  - wakeonlan-adv:
