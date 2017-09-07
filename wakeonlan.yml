@@ -5,13 +5,14 @@
 
 - hosts: computers
   gather_facts: no
+  serial: 10
   tasks:
 
   - name: Send magic Wake-On-Lan packet to turn on individual systems via gateway
     win_wakeonlan:
       mac: '{{ mac }}'
       broadcast: 192.168.0.255
-    delegate_to: '{{ wake_server | default("computer59") }}'
+    delegate_to: '{{ wake_server | default("computer39") }}'
 
   # TODO: Test wakeonlan module with WoWLAN
   # TODO: Match inventory with MAC addresses (for DHCP clients)
@@ -31,6 +32,9 @@
 #    become: yes
 #    delegate_to: localhost
 
+- hosts: computers
+  gather_facts: no
+  tasks:
   - name: Wait for the system's WinRM service to come online
     wait_for_connection:
       timeout: 20
