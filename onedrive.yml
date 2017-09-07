@@ -47,9 +47,8 @@
   - name: Remove OneDrive (1)
     win_shell: |
       taskkill.exe /F /IM OneDrive.exe
-#      taskkill.exe /F /IM explorer.exe
     register: taskkill
-    changed_when: taskkill.rc == 0 and '"The process \"OneDrive.exe\" not found." not in taskkill.stderr'
+    changed_when: taskkill.rc == 0 and 'The process "OneDrive.exe" not found.' not in taskkill.stderr
     failed_when: taskkill.rc != 0 and 'The process "OneDrive.exe" not found.' not in taskkill.stderr
     ignore_errors: yes
     tags:
@@ -73,7 +72,3 @@
     - '%USERPROFILE%\OneDrive'
     - 'C:\OneDriveTemp'
     - '%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk'
-
-  - name: Restart explorer
-    win_shell:
-      explorer.exe
