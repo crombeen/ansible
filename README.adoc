@@ -1,4 +1,12 @@
 = Using Ansible to manage Windows desktops
+One of the primary goals of this project is to create a systems management solution that would ease our work, but does not create an extra dependency for the infrastructure. If anything, the systems can be managed by hand individually as before.
+
+As part of this project the following modules have been implemented:
+- wakeonlan
+- wait_for_connection
+- win_defrag
+- win_shortcut
+
 
 == Configuring the system for Powershell Remoting
 The following actions have to be taken to enable WinRM Powershell remoting.
@@ -24,7 +32,7 @@ Answer *yes* when asked to change the policy.
 === Allow Powershell remoting for Ansible
 Start Powershell (Run as Administrator) and run the following command:
 
-    ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650
+    ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650 -EnableCredSSP
 
 === Enable Wake-on-LAN (WoL)
 In order to automatically turn on systems when doing maintenance, we configured the systems to support Wake-on-LAN.
@@ -49,14 +57,16 @@ The following things we can manage using Ansible today:
 
  - Turn on systems (using Wake-On-Lan)
  - Collect information from the system (e.g. Name, MAC address, IP addres, hardware) into a CSV
+ - Manage energy settings
  - Apply system updates
  - https://chocolatey.org/[Installing and removing software] (incl. everything from Ninite)
- - Enable/disable services
+ - Enable/disable system services
  - Apply/merge registry settings
    * https://blogs.technet.microsoft.com/heyscriptingguy/2013/01/17/use-powershell-to-change-the-mouse-pointer-scheme/[Change mouse pointer to Extra Large]
    * http://ccmexec.com/2015/09/customizing-the-windows-10-start-menu-and-add-ie-shortcut-during-osd/[Modifying the start menu]
    * Setting up International(ization) and Keyboard Layout
  - Customize desktop icons
+ - Defragment filesystem(s)
 
 Still need to be implement:
 
@@ -64,8 +74,6 @@ Still need to be implement:
    - Customize start menu
    - Customize task bar
    - Customize system tray
-   - Customize startup tasks (like autoruns)
-   - Customize services (like autoruns)
  * Missing facts
    - Disk information (size, free-space)
 
@@ -73,39 +81,46 @@ Still need to be implement:
 == Instructions
 Existing Ansible playbooks are available from: https://github.com/crombeen/ansible
 
-=== Turning all desktops on
+=== Turning on desktops using WoL
     $ ansible-playbook -k wakeonlan.yml
 
-=== Collect information
+=== Collect information (creates inventory in CSV format)
     $ ansible-playbook -k collect.yml
 
 === Manage software
+    $ ansible-playbook -k provision.yml
     $ ansible-playbook -k software.yml
     $ ansible-playbook -k cleanup.yml
 
-=== Manage users
+== Manage system configuration
+    $ ansible-playbook -k config.yml
+
+=== Manage local users
     $ ansible-playbook -k users.yml
 
 === Manage desktop
     $ ansible-playbook -k desktop.yml
 
-=== Run everything
+=== Manage RDP and OneDrive
+    $ ansible-playbook -k rdesktop.yml
+    $ ansible-playbook -k onedrive.yml
 
+=== Run everything
     $ ansible-playbook -k site.yml
 
 
 == Problems
 Here is a list of problems today:
 
- - Often command line systems management was an afterthought in Windows, not designed with it in mind.
+ - Often command line desktop management was an afterthought in Windows, not designed with it in mind.
 
- - A lot of (desktop) manipulations require registry edits because out-of-the-box cmdlets do not exist
+ - A lot of (desktop) manipulations require registry edits because out-of-the-box cmdlets do not exist.
 
- - Hard to predict how registry modifications will survive Windows 10 updates
+ - Hard to predict how registry modifications will survive Windows 10 updates.
 
- - Powershell is a big improvement over cmd.exe, however it feels like Perl 4 (1993) more than anything modern
+ - Powershell is a big improvement over cmd.exe, however it feels like Perl 4 (1993) more than anything modern (encountered various inconsistencies and design issues).
 
- - Since we have Windows 10 Home OEM licenses, Microsoft's solution (Active Directory and Group Policies) is not an option, and we prefer open tooling and manageable actions
+ - Since we have Windows 10 Home OEM licenses, Microsoft's solution (Active Directory and Group Policies) is not an option, and we prefer open tooling and manageable actions.
 
 
 == Resources
