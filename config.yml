@@ -12,6 +12,45 @@
     wait_for_connection:
       timeout: 20
 
+  - name: Create Crombeen directory
+    win_file:
+      path: '%LOCALAPPDATA%\Crombeen'
+      state: directory
+    tags: winrm
+
+  - name: Copy ConfigureRemotingForAnsible.ps1 to system
+    win_copy:
+      src: ConfigureRemotingForAnsible.ps1
+      dest: '%LOCALAPPDATA%\Crombeen\ConfigureRemotingForAnsible.ps1'
+    tags: winrm
+
+  - name: Configure WinRM from scheduled task weekly
+    win_scheduled_task:
+      name: ConfigureRemotingForAnsible
+      description: Run ConfigureRemotingForAnsible.ps1
+      executable: powershell.exe
+      arguments: -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Crombeen\ConfigureRemotingForAnsible.ps1" -CertValidityDays 3650 -EnableCredSSP -ForceNewSSLCert
+      time: 1pm
+      frequency: weekly
+      days_of_week: monday
+      enabled: yes
+      user: SYSTEM
+    tags: winrm
+
+  - name: Run ConfigureRemotingForAnsible.ps1
+    win_shell:
+      Powershell.exe -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Crombeen\ConfigureRemotingForAnsible.ps1" -CertValidityDays 3650 -EnableCredSSP -ForceNewSSLCert
+    register: winrm
+    async: 45
+    poll: 5
+    tags: run-winrm
+
+  - name: Wait for WinRM
+    async_status: jid={{ winrm.ansible_job_id }}
+    register: job_result
+    until: job_result.finished
+    retries: 30
+
   - name: Registry configuration
     win_regedit:
       path: '{{ item.path }}'
@@ -203,7 +242,7 @@
 
   - name: Configure time zone
     win_timezone:
-      timezone: 'Romance Standard Time'
+      timezone: Romance Standard Time
     tags: timezone
 
   - name: Disable Zune Music and Zune Video appx
