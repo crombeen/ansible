@@ -11,8 +11,8 @@ ansible_winrm_transport: ssl
 #ansible_winrm_transport: certificate
 #ansible_winrm_transport: ntlm
 ansible_winrm_username: ictadmin
-ansible_winrm_operation_timeout_sec: 180
-ansible_winrm_read_timeout_sec: 360
+#ansible_winrm_operation_timeout_sec: 180
+#ansible_winrm_read_timeout_sec: 360
 #
 #ansible_winrm_cert_pem: /home/dag/home-made/crombeen/certs/winrm_client_cert.pub.pem
 #ansible_winrm_cert_key_pem: /home/dag/home-made/crombeen/certs/winrm_client_cert.prv.pem
