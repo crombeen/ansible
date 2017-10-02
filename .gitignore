@@ -1,4 +1,3 @@
-hosts
 hosts.ini
 group_vars/all/passwords.yml
 library/
