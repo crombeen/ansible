@@ -1,0 +1,38 @@
+- hosts: computers
+  gather_facts: no
+
+  vars:
+#    old_names:
+#    - Canon iR-ADV C7055/C7065 Class Driver
+#    - Canon Printer
+#    - Canon
+    new_name: iR-ADV C7260
+
+  tasks:
+#  - win_shell: |
+#      ( Get-Printer -Name "{{ item }}" ) -and ( Rename-Printer -Name "{{ item }}" -NewName "{{ new_name }}" )
+#    with_items: '{{ old_names }}'
+
+  # Admin
+  - win_shell: |
+      Set-PrintConfiguration -PrinterName "{{ new_name }}" -Color $false -Confirm:$false
+    register: printer_admin
+
+  # User
+  - win_shell: |
+      Set-PrintConfiguration -PrinterName "{{ new_name }}" -Color $false -Confirm:$false
+    register: printer_user
+    become: '{{ user }}'
+
+  # Failure
+  - win_shell: |
+      Get-Printer
+    when:
+    - printer_admin|failed
+    - printer_user|failed
+
+  - fail:
+      msg: "Could not set printer settings."
+    when:
+    - printer_admin|failed
+    - printer_user|failed
