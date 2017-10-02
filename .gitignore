@@ -1,6 +1,6 @@
 hosts
 hosts.ini
-group_vars/crombeen/passwords.yml
+group_vars/all/passwords.yml
 library/
 test/
 *.pyc
