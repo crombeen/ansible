@@ -6,6 +6,12 @@
       description: Local Users
       state: present
 
+  - name: Create local "Gebruikers" group
+    win_group:
+      name: Gebruikers
+      description: Local Users
+      state: present
+
   - name: Create local "ictadmin" user
     win_user:
       fullname: ICT Administrator
@@ -15,6 +21,26 @@
       password_expired: no
       password_never_expires: yes
       groups: [ Administrators ]
+      state: present
+
+  - name: Disable local "Administrator" user
+    win_user:
+      name: Administrator
+      account_disabled: yes
+      state: present
+
+  - name: Create local "{{ user }}" user
+    win_user:
+      fullname: '{{ user|title }}'
+      name: '{{ user }}'
+#      password: '1234'
+      description: Gedeelde gebruiker door de leerlingen van basisschool Crombeen
+      account_disabled: no
+      account_locked: no
+      groups: [ Gebruikers, Users ]
+      user_cannot_change_password: yes
+      password_expired: no
+      password_never_expires: yes
       state: present
 
 #- hosts: all:!computerlokaal
@@ -33,11 +59,11 @@
 
   - name: Remove local "leerling" user
     win_user:
-      name: leerling
+      name: 'leerling'
       state: absent
 
-- hosts: computerlokaal:gang:technieklokaal
-  tasks:
+#- hosts: computerlokaal:extra:technieklokaal
+#  tasks:
 #  - win_user:
 #      name: '{{ item }}'
 #      state: absent
@@ -51,23 +77,3 @@
 #      name: Visitor
 #      description: Visitors
 #      state: present
-
-  - name: Disable local "Administrator" user
-    win_user:
-      name: Administrator
-      account_disabled: yes
-      state: present
-
-  - name: Create local "leerling" user
-    win_user:
-      fullname: Leerling
-      name: leerling
-#      password: '1234'
-      description: Gedeelde gebruiker door de leerlingen van basisschool Crombeen
-      account_disabled: no
-      account_locked: no
-      groups: [ Users ]
-      user_cannot_change_password: yes
-      password_expired: no
-      password_never_expires: yes
-      state: present
