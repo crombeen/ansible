@@ -6,23 +6,29 @@
 - hosts: computers
   gather_facts: no
   serial: 10
+
+  vars:
+    wake_server: localhost
+
   tasks:
 
-  - name: Send magic Wake-On-Lan packet to turn on individual systems via gateway
+  - name: Send magic Wake-On-Lan packet to turn on individual systems via gateway {{ wake_server }}
     win_wakeonlan:
       mac: '{{ mac }}'
       broadcast: 192.168.0.255
-    delegate_to: '{{ wake_server | default("computer31") }}'
+    delegate_to: '{{ wake_server }}'
+    when: wake_server is defined
 
-#  # Advanced idempotent implementation
-#  - wakeonlan-adv:
-#      mac: '{{ mac }}'
-#      broadcast: 192.168.234.1
-#      port: 9
-#      check_arp: no
-#      timeout: 10
-#    become: yes
-#    delegate_to: localhost
+  # Advanced idempotent implementation
+  - wakeonlan-adv:
+      mac: '{{ mac }}'
+      broadcast: 192.168.234.1
+      port: 9
+      check_arp: no
+      timeout: 10
+    become: yes
+    delegate_to: localhost
+    when: wake_server == 'localhost'
 
 - hosts: computers
   gather_facts: no
