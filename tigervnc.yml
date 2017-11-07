@@ -45,7 +45,7 @@
     - { name: Password,            data: '{{ vnc_password }}', type: binary }
     - { name: QueryConnect,        data: 0 }
     - { name: QueryOnlyIfLoggedOn, data: 0 }
-    - { name: RemoveWallpaper,     data: 1 }
+    - { name: RemoveWallpaper,     data: 0 }
     - { name: SecurityTypes,       data: 'VeNCrypt,TLSVnc', type: string }
     tags: registry
 
@@ -64,6 +64,6 @@
     win_service:
       name: TigerVNC
       startmode: auto
-      state: started
+      state: restarted
       force_dependent_services: yes
     tags: service
