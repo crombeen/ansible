@@ -1,4 +1,4 @@
-- hosts: computerlokaal:gang:technieklokaal
+- hosts: computerlokaal:extra:technieklokaal
   tasks:
   - name: Install Windows updates
     win_updates:
