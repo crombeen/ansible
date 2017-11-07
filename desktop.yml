@@ -5,48 +5,83 @@
 
 # TODO: Group Policies: https://msdn.microsoft.com/en-us/library/ms815238.aspx
 
+#- hosts: computerlokaal
+#  gather_facts: no
+#  tasks:
+#  - name: Clean up Downloads
+#    win_cleanup:
+#      downloads: yes
+#      system_temp: yes
+#      temp: yes
+#      user_temp: yes
+
 - hosts: computers
   gather_facts: no
-
   tasks:
-  - name: Test system connection
-    wait_for_connection:
-      timeout: 20
+
+#  - name: Clean up Downloads
+#    win_cleanup:
+#      items:
+#      - C:\Users\leerling\Downloads\*
+#      - C:\Windows\Temp\*
+#      system_prefetch: yes
+#      system_temp: yes
+#      user_downloads: yes
+#      user_temp: yes
+#      downloads: yes
+#      temp: yes
+#    tags: cleanup
 
   - name: Add shortcut icons
     win_copy:
       src: files/icons/{{ item }}
       dest: '%Public%\Pictures\{{ item }}'
     with_items:
-    - bingel.ico
-    - computermeester.ico
-    - symbaloo.ico
+    - bingel2.ico
+    - computermeester2.ico
+    - kweetet3.ico
+    - scratch2.ico
+    - symbaloo2.ico
     tags: icons
 
   - name: Add default desktop shortcuts
     win_shortcut:
       description: '{{ item.desc }}'
       src: '{{ ansible_env["ProgramFiles(x86)"] if "ProgramFiles(x86)" in ansible_env else ansible_env.ProgramFiles }}\Google\Chrome\Application\chrome.exe'
-      args: '--new-window {{ item.url }}'
+      args: '--new-window {{ item.url }} {{ item.args|default("") }}'
       dest: '{{ item.dest }}'
       icon: '{{ item.icon | default(",0") }}'
       windowstyle: '{{ item.windowstyle | default("normal") }}'
+      hotkey: '{{ item.hotkey | default(omit) }}'
       state: present
     with_items:
     - desc: ComputerMeester website
       url: http://computermeester.be/
       dest: '%Public%\Desktop\Computer Meester.lnk'
-      icon: '%Public%\Pictures\computermeester.ico,0'
+      icon: '%Public%\Pictures\computermeester2.ico,0'
       windowstyle: maximized
+#      args: --start-fullscreen
     - desc: Bingel website
       url: https://www.bingel.be/bingel/login/
       dest: '%Public%\Desktop\Bingel.lnk'
-      icon: '%Public%\Pictures\bingel.ico,0'
+      icon: '%Public%\Pictures\bingel2.ico,0'
       windowstyle: maximized
     - desc: Symbaloo website
       url: https://www.symbaloo.com/
       dest: '%Public%\Desktop\Symbaloo.lnk'
-      icon: '%Public%\Pictures\symbaloo.ico,0'
+      icon: '%Public%\Pictures\symbaloo2.ico,0'
+      windowstyle: maximized
+      hotkey: Ctrl+Alt+S
+#      args: --start-fullscreen
+    - desc: Scratch website
+      url: https://scratch.mit.edu/projects/editor/
+      dest: '%Public%\Desktop\Scratch.lnk'
+      icon: '%Public%\Pictures\scratch2.ico,0'
+      windowstyle: maximized
+    - desc: Kweetet website
+      url: https://www.kweetet.be/leerling
+      dest: '%Public%\Desktop\Kweetet.lnk'
+      icon: '%Public%\Pictures\kweetet3.ico,0'
       windowstyle: maximized
     tags: shortcuts
 
@@ -116,7 +151,7 @@
       dest: '{{ item }}'
       state: absent
     with_items:
-    - C:\Users\leerling\Desktop\WinDirStat.lnk
+    - C:\Users\{{ user }}\Desktop\WinDirStat.lnk
     - '%Public%\Desktop\Audacity.lnk'
     - '%Public%\Desktop\CDex.lnk'
     - '%Public%\Desktop\Google Chrome.lnk'
@@ -164,7 +199,7 @@
     - shares
     - shortcuts
 
-- hosts: klaslokaal:gang:beheer
+- hosts: klaslokaal:extra:beheer
   tasks:
   - name: Add Music/Video shortcuts
     win_shortcut:
