@@ -52,7 +52,7 @@
     - chocolatey
     - software
 
-- hosts: computerlokaal:gang:technieklokaal
+- hosts: computerlokaal:extra:technieklokaal
   strategy: free
   tasks:
   - name: Remove software
