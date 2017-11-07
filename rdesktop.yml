@@ -2,13 +2,9 @@
   tasks:
   - name: Test system connection
     wait_for_connection:
-      timeout: 20
+      timeout: 30
 
-  - name: Ensure rdpwrap is installed
-    win_chocolatey:
-      name: rdpwrapper
-      state: present
-#      state: '{{ "absent" if ansible_os_name == "Windows 10 Pro" else "present" }}'
+  - setup:
 
   # This doesn't work for all systems :-/
   - name: Ensure we are on a private network
@@ -18,51 +14,76 @@
     ignore_errors: yes
 
   # Only do this for non-Pro versions
-#  - name: Run update.bat
-#    win_shell: cmd.exe /C C:\ProgramData\chocolatey\lib\rdpwrapper\tools\update.bat
-#    changed_when: no
-#    ignore_errors: yes
+  - name: Only run this for Home edition
+    when: ansible_os_name != "Microsoft Windows 10 Pro"
+    block:
 
-  # Only do this for non-Pro versions
-  - name: Update rdpwrap config
-    win_psexec:
-      command: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe -w
-      system: yes
-    changed_when: no
-    ignore_errors: yes
-    when: ansible_os_name != "Windows 10 Pro"
-    tags: update
+    - name: Copy rfxvmt.dll from network share
+      win_copy:
+        src: '\\DISKSTATION01\ictadmin\Windows\Windows 10\{{ ansible_distribution_version }}.{{ ansible_architecture }}\rfxvmt.dll'
+        dest: C:\Windows\Temp\rfxvmt.dll
+        remote_src: yes
+      become: yes
 
-  - name: Ensure RDPWInst.exe is run daily
-    win_scheduled_task:
-      name: RDPWinst
-      description: Update RDPwrap config
-      executable: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe
-      arguments: -w
-      time: 5pm
-      frequency: daily
-      enabled: yes
-      user: SYSTEM
+    - name: Replace rfxvmt.dll to C:\Windows\System32
+      win_copy:
+        src: C:\Windows\Temp\rfxvmt.dll
+        dest: C:\Windows\System32\rfxvmt.dll
+        remote_src: yes
 
-  # Reimplement RDPConf.exe in Ansible
-  - name: Configure RDP firewall rule
-    win_firewall_rule:
-      name: Remote Desktop
-      localport: 3389
-      action: allow
-      direction: in
-      protocol: TCP
-#      service:
-      profile: private
-#      force: yes
-      state: present
-      enable: yes
-    register: fw
-    changed_when: '"An identical rule exists" not in fw.msg and "The rule exists but has different values" not in fw.msg'
-    failed_when: fw|failed or "An identical rule exists" not in fw.msg
-    ignore_errors: yes
-    tags: firewall
+    - name: Ensure rdpwrap is installed
+      win_chocolatey:
+        name: rdpwrapper
+        state: present
+#        state: '{{ "absent" if ansible_os_name == "Windows 10 Pro" else "present" }}'
 
+    - name: Run install.bat
+      win_shell: cmd.exe /C C:\ProgramData\chocolatey\lib\rdpwrapper\tools\install.bat
+      changed_when: no
+      ignore_errors: yes
+
+    - name: Run update.bat
+      win_shell: cmd.exe /C C:\ProgramData\chocolatey\lib\rdpwrapper\tools\update.bat
+      changed_when: no
+      ignore_errors: yes
+
+    # Only do this for non-Pro versions
+    - name: Update rdpwrap config
+      win_psexec:
+        command: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe -w
+        system: yes
+      changed_when: no
+      ignore_errors: yes
+      when: ansible_os_name != "Microsoft Windows 10 Pro"
+      tags: update
+
+    - name: Ensure RDPWInst.exe is run daily
+      win_scheduled_task:
+        name: RDPWinst
+        description: Update RDPwrap config
+        executable: C:\ProgramData\chocolatey\lib\rdpwrapper\tools\RDPWInst.exe
+        arguments: -w
+        time: 5pm
+        frequency: daily
+        enabled: yes
+        user: SYSTEM
+
+    # Reimplement RDPConf.exe in Ansible
+    - name: Configure RDP firewall rule
+      win_firewall_rule:
+        name: Remote Desktop
+        localport: 3389
+        action: allow
+        direction: in
+        protocol: TCP
+        profile: private
+        state: present
+        enable: yes
+      ignore_errors: yes
+      register: fw
+      tags: firewall
+
+  # Do this for all Windows 10 systems
   - name: Enable Terminal Server
     win_regedit:
       path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server
@@ -107,7 +128,7 @@
     win_service:
       name: TermService
       state: started
-      force: yes
+#      force: yes
     tags: service
 
    # Reboot is not required
