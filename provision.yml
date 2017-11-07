@@ -31,8 +31,9 @@
     - keepass.install
     - libreoffice-oldstable
     - notepadplusplus
-    - rdpwrapper
+#    - rdpwrapper
     - sysinternals
+    - tigervnc
     - tipp10
     - vlc
     - windirstat
