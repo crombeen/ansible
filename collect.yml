@@ -6,16 +6,12 @@
 - hosts: computers
   gather_facts: no
   tasks:
-  - name: Test system connection
-    wait_for_connection:
-      timeout: 20
-
   - name: Update facts cache
     setup:
 
   - name: Create CSV log entry
     set_fact:
-      csv_entry: '{{ ansible_date_time.date }} {{ ansible_date_time.time }};{{ ansible_hostname|upper }};{{ ansible_system_description }};{{ ansible_fqdn }};{{ ansible_os_name }};{{ ansible_distribution_version }};{{ ansible_architecture }};{{ mac }};{{ ansible_ip_addresses[0] }};{{ ansible_processor[1] }};{{ (ansible_memtotal_mb/1024)|round|int }}GB;{{ ansible_product_version|default("") }};"{{ ansible_system_vendor }}";{{ ansible_product_name }};{{ ansible_product_serial }};{{ ansible_lastboot }};{{ ansible_win_rm_certificate_expires }};'
+      csv_entry: '{{ ansible_date_time.date }} {{ ansible_date_time.time }};{{ ansible_hostname|upper }};{{ ansible_system_description }};{{ ansible_fqdn }};{{ ansible_os_name }};{{ ansible_distribution_version }};{{ ansible_architecture }};{{ mac }};{{ ansible_ip_addresses[0] }};{{ ansible_processor[1] }};{{ (ansible_memtotal_mb/1024)|round|int }}GB;"{{ ansible_system_vendor }}";{{ ansible_product_name }};{{ ansible_product_serial }};{{ ansible_lastboot }};{{ ansible_win_rm_certificate_expires }};'
 
 - hosts: computers
   serial: 1
