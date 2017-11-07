@@ -1,10 +1,15 @@
 - hosts: computers
   gather_facts: no
   tasks:
+  - name: Test system connection
+    wait_for_connection:
+      timeout: 10
+
   - name: Upgrade existing software
     win_chocolatey:
       name: all
       state: latest
+    tags: software
 
 #  - name: Install/remove java
 #    win_chocolatey:
