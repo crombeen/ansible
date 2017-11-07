@@ -1,0 +1,5 @@
+- hosts: computers
+  tasks:
+  - win_defrag:
+      include_volumes: C
+      freespace_consolidation: yes
