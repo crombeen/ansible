@@ -37,19 +37,25 @@
       user: SYSTEM
     tags: winrm
 
-  - name: Run ConfigureRemotingForAnsible.ps1
-    win_shell:
-      Powershell.exe -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Crombeen\ConfigureRemotingForAnsible.ps1" -CertValidityDays 3650 -EnableCredSSP -ForceNewSSLCert
-    register: winrm
-    async: 45
-    poll: 5
-    tags: run-winrm
+#  - name: Run ConfigureRemotingForAnsible.ps1
+#    win_shell:
+#      Powershell.exe -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Crombeen\ConfigureRemotingForAnsible.ps1" -CertValidityDays 3650 -EnableCredSSP -ForceNewSSLCert
+#    register: winrm
+#    async: 45
+#    poll: 5
+#    tags: run-winrm
+#
+#  - name: Wait for WinRM
+#    async_status: jid={{ winrm.ansible_job_id }}
+#    register: job_result
+#    until: job_result.finished
+#    retries: 30
 
-  - name: Wait for WinRM
-    async_status: jid={{ winrm.ansible_job_id }}
-    register: job_result
-    until: job_result.finished
-    retries: 30
+#  - name: Set Belgian keyboard
+#    win_psexec:
+#      command: powershell.exe -ExecutionPolicy Bypass -Command "Set-WinUserLanguageList -LanguageList nl-BE"
+#      interactive: yes
+#    tags: keyboard
 
   - name: Registry configuration
     win_regedit:
@@ -213,14 +219,24 @@
 
   - name: Set default system locale to nl-BE
     win_shell: |
+      New-WinUserLanguageList -Language nl-BE
       Set-Culture nl-BE
       Set-WinSystemLocale nl-BE
       Set-WinHomeLocation -GeoId 21
       Set-WinUserLanguageList -LanguageList nl-BE -Force
 
+  - name: Set default system locale to nl-BE
+    win_shell: |
+      Set-Culture nl-BE
+      Set-WinSystemLocale nl-BE
+      Set-WinHomeLocation -GeoId 21
+      Set-WinUserLanguageList -LanguageList nl-BE -Force
+    become: yes
+    become_user: '{{ user }}'
+
   - name: Configure hostname, domain and workgroup
     win_domain_membership:
-      hostname: '{{ inventory_hostname_short|lower }}'
+      hostname: '{{ inventory_hostname_short|upper }}'
       dns_domain_name: crombeen.internal
       workgroup_name: CROMBEENGROUP
       domain_admin_user: '{{ ansible_winrm_username }}'
@@ -307,12 +323,34 @@
       type: none
     tags: vlc
 
+#  - name: Reset file associations (http://www.winhelponline.com/blog/windows-10-resetting-file-associations/)
+#    win_regedit:
+#      path: '{{ item.path }}'
+#      name: '{{ item.name }}'
+#      data: '{{ item.data|default(None) }}'
+#      type: '{{ item.type|default("string") }}'
+#    with_items:
+#    # Reset file associations
+#    - path: HKCU:\SOFTWARE\Classes\AppXvhc4p7vz4b485xfp46hhk3fq3grkdgjg
+#      name: NoOpenWith
+#      data:
+#    - path: HKCU:\SOFTWARE\Classes\AppXvhc4p7vz4b485xfp46hhk3fq3grkdgjg
+#      name: NoStaticDefaultVerb
+#      data:
+#    - path: HKCU:\SOFTWARE\Classes\AppX43hnxtbyyps62jhe9sqpdzxn1790zetc
+#      name: NoOpenWith
+#      data:
+#    - path: HKCU:\SOFTWARE\Classes\AppX43hnxtbyyps62jhe9sqpdzxn1790zetc
+#      name: NoStaticDefaultVerb
+#      data:
+#    tags: vlc
+
 #  - name: Disable hibernate option (removes hibernation file hiberfil.sys)
 #    win_shell: |
 #      powercfg.exe -h off
 #    tags: power
 
-- hosts: computerlokaal:gang:technieklokaal:computer53
+- hosts: computerlokaal:extra:technieklokaal:computer53
   gather_facts: no
   tasks:
   - name: Configuration
