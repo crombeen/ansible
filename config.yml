@@ -83,17 +83,17 @@
 #      name: NV HostName
 #      data: '{{ inventory_hostname_short|lower }}'
 #      type: string
-#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-#      name: Domain
-#      data: crombeen.internal
-#      type: string
-#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-#      name: NV Domain
-#      data: crombeen.internal
-#      type: string
+    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      name: Domain
+      data: crombeen.internal
+      type: string
+    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      name: NV Domain
+      data: crombeen.internal
+      type: string
     - path: HKLM:\System\ControlSet001\Services\LanmanServer\Parameters
       name: SrvComment
-      data: '{{ owner }} ({{ room }})'
+      data: '{{ owner }}{{ " ("~role|title~")" if role is defined else "" }}{{ "" if type in [ "desktop"] else " ("~type|title~")" }}{{ " (Extra)" if "extra" in group_names else "" }} ({{ room }})'
       type: string
 
     # Disable all apps from Windows Store
@@ -236,13 +236,15 @@
 
   - name: Configure hostname, domain and workgroup
     win_domain_membership:
-      hostname: '{{ inventory_hostname_short|upper }}'
+      hostname: '{{ inventory_hostname_short }}'
       dns_domain_name: crombeen.internal
       workgroup_name: CROMBEENGROUP
       domain_admin_user: '{{ ansible_winrm_username }}'
       domain_admin_password: '{{ ansible_winrm_password }}'
       state: workgroup
-    tags: workgroup
+    tags:
+    - hostname
+    - workgroup
 
   - name: Configure DNS servers
     win_dns_client:
@@ -421,10 +423,10 @@
     - SharedAccess                             # Internet Connection Sharing (ICS)
     - TrkWks                                   # Distributed Link Tracking Client
     - WbioSrvc                                 # Windows Biometric Service
-    #- WlanSvc                                 # WLAN AutoConfig
+    #- WlanSvc                                  # WLAN AutoConfig
     - WMPNetworkSvc                            # Windows Media Player Network Sharing Service
     #- wscsvc                                   # Windows Security Center Service
-    #- WSearch                                 # Windows Search
+    #- WSearch                                  # Windows Search
     - XblAuthManager                           # Xbox Live Auth Manager
     - XblGameSave                              # Xbox Live Game Save Service
     - XboxNetApiSvc                            # Xbox Live Networking Service
