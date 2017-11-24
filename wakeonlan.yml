@@ -7,28 +7,35 @@
   gather_facts: no
   serial: 10
 
+#  vars:
+#    wake_server: localhost
   vars:
-    wake_server: localhost
+    macaddress: '{{ ansible_interfaces[0].macaddress|default(mac|default("")) }}'
 
   tasks:
-
   - name: Send magic Wake-On-Lan packet to turn on individual systems via gateway {{ wake_server }}
     win_wakeonlan:
-      mac: '{{ mac }}'
+      mac: '{{ macaddress }}'
       broadcast: 192.168.0.255
     delegate_to: '{{ wake_server }}'
     when: wake_server is defined
 
-  # Advanced idempotent implementation
-  - wakeonlan-adv:
-      mac: '{{ mac }}'
-      broadcast: 192.168.234.1
-      port: 9
-      check_arp: no
-      timeout: 10
-    become: yes
+  - wakeonlan:
+      mac: '{{ macaddress }}'
+      broadcast: 192.168.0.255
     delegate_to: localhost
-    when: wake_server == 'localhost'
+    when: wake_server is not defined
+
+  # Advanced idempotent implementation
+#  - wakeonlan-adv:
+#      mac: '{{ macaddress }}'
+#      broadcast: 192.168.234.1
+#      port: 9
+#      check_arp: no
+#      timeout: 10
+#    become: yes
+#    delegate_to: localhost
+#    when: wake_server is not defined
 
 - hosts: computers
   gather_facts: no
