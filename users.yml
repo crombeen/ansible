@@ -31,10 +31,10 @@
 
   - name: Create local "{{ user }}" user
     win_user:
-      fullname: '{{ user|title }}'
+      fullname: '{{ "Leerling" if user == "leerling" else owner }}'
       name: '{{ user }}'
 #      password: '1234'
-      description: Gedeelde gebruiker door de leerlingen van basisschool Crombeen
+      description: '{{ owner }}{{ " ("~role|title~")" if role is defined else "" }}{{ "" if type in [ "desktop"] else " ("~type|title~")" }}{{ " (Extra)" if "extra" in group_names else "" }}'
       account_disabled: no
       account_locked: no
       groups: [ Gebruikers, Users ]
@@ -42,6 +42,13 @@
       password_expired: no
       password_never_expires: yes
       state: present
+    when: user is defined
+
+  - name: Remove local "gebruiker" user
+    win_user:
+      name: 'gebruiker'
+      state: absent
+    when: user is defined and user != "gebruiker"
 
 #- hosts: all:!computerlokaal
 - hosts: computer33
