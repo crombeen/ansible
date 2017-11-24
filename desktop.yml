@@ -16,7 +16,6 @@
 #      user_temp: yes
 
 - hosts: computers
-  gather_facts: no
   tasks:
 
 #  - name: Clean up Downloads
@@ -39,6 +38,8 @@
     with_items:
     - bingel2.ico
     - computermeester2.ico
+    - gmail2.ico
+    - iomniwize.ico
     - kweetet3.ico
     - scratch2.ico
     - symbaloo2.ico
@@ -113,6 +114,7 @@
     - desc: WakeMeOnLan
       src: \\diskstation01\ictadmin\Tools\WakeMeOnLan\WakeMeOnLan.exe
       dest: Desktop\WakeMeOnLan.lnk
+    ignore_errors: yes
     tags: shortcuts
 
 #  - name: Disable Windows tiles for new users
@@ -158,6 +160,7 @@
     - '%Public%\Desktop\Google Earth.lnk'
     - '%Public%\Desktop\Inkscape.lnk'
     - '%Public%\Desktop\Inkscape 0.92.1.lnk'
+    - '%Public%\Desktop\Inkscape 0.92.2.lnk'
 #    - '%Public%\Desktop\InfraRecorder.lnk'
 #    - '%Public%\Desktop\KeePass 2.lnk'
     - '%Public%\Desktop\LibreOffice 5.1.lnk'
@@ -165,6 +168,7 @@
     - '%Public%\Desktop\LibreOffice 5.3.lnk'
     - '%Public%\Desktop\Mozilla Firefox.lnk'
     - '%Public%\Desktop\VLC media player.lnk'
+    - '%Public%\Desktop\Google Drive File Stream.lnk'
     tags:
     - cleanup
     - shortcuts
@@ -195,6 +199,7 @@
       dest: Desktop\Video.lnk
       src: \\diskstation01\video
       idx: 178
+    ignore_errors: yes
     tags:
     - shares
     - shortcuts
@@ -216,9 +221,50 @@
       dest: '%Public%\Desktop\Video.lnk'
       src: \\diskstation01\video
       idx: 178
+    ignore_errors: yes
     tags:
     - shares
     - shortcuts
+
+- hosts: klaslokaal:beheer
+  tasks:
+  - name: Add extra shortcuts
+    win_shortcut:
+      description: '{{ item.desc }}'
+      src: '{{ ansible_env["ProgramFiles(x86)"] if "ProgramFiles(x86)" in ansible_env else ansible_env.ProgramFiles }}\Google\Chrome\Application\chrome.exe'
+      args: '--new-window {{ item.url }} {{ item.args|default("") }}'
+      dest: '{{ item.dest }}'
+      icon: '{{ item.icon | default(",0") }}'
+      windowstyle: '{{ item.windowstyle | default("normal") }}'
+      hotkey: '{{ item.hotkey | default(omit) }}'
+      state: present
+    with_items:
+    - desc: iOmniwize
+      url: https://www.iomniwize.net/lpwebnew/lpUILogin.aspx
+      dest: '%Public%\Desktop\iOmniwize.lnk'
+      icon: '%Public%\Pictures\iomniwize.ico'
+    - desc: Mail Crombeen
+      url: http://mail.basisschoolcrombeen.be/
+      dest: '%Public%\Desktop\E-mail.lnk'
+      icon: '%Public%\Pictures\gmail2.ico'
+    tags:
+    - shortcuts
+    - shortcuts-klas
+
+#  - name: Add Google Drive
+#    win_shortcut:
+#      desc: '{{ item.desc }}'
+#      src: '{{ item.src }}'
+#      dest: '{{ item.dest }}'
+#      icon: '%SystemRoot%\System32\imageres.dll,{{ item.idx }}'
+#    with_items:
+#    - desc: Google Drive File Stream
+#      dest: '%Public%\Desktop\Google Drive File Stream.lnk'
+#      src: G:\
+#      idx: 217
+#    tags:
+#    - shortcuts
+#    - shortcuts-klas
 
 # Add KeePass shortcut for all users on admin systems
 - hosts: beheer
