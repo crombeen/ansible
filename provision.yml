@@ -42,6 +42,15 @@
     - adblockpluschrome
     tags: software
 
+- hosts: klaslokaal:beheer
+  tasks:
+  - name: Install Google Drive File Stream
+    win_chocolatey:
+      name: google-drive-file-stream
+      state: present
+      ignore_checksums: yes
+    tags: gdrive
+
 - hosts: computer26:computer41:computer48
   tasks:
   - name: Install dropbox
