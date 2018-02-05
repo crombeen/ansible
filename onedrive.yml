@@ -1,4 +1,4 @@
-- hosts: computers:!computer08:!computer23:!computer47:!computer48:!computer49:!computer60
+- hosts: all:!netwerk:!wifi:!computer08:!computer23:!computer48:!computer60
   gather_facts: no
   tasks:
   - name: Configuration
