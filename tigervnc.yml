@@ -4,6 +4,13 @@
     wait_for_connection:
       timeout: 20
 
+  - name: Ensure we are on a private network
+    win_shell: |
+      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "LAN-Verbinding" -ErrorAction SilentlyContinue) -or
+      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Local Area Connection" -ErrorAction SilentlyContinue) -or
+      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Ethernet" -ErrorAction SilentlyContinue)
+    tags: private
+
 #  - name: Download VNC Connect
 #    win_get_url:
 #      url: https://www.realvnc.com/download/file/vnc.files/VNC-Server-6.2.0-Windows.exe
