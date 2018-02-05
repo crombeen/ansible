@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright 2017, Dag Wieers <dag@wieers.com>
 #
 # This playbook cleans up a Windows 10 system. It is intended to be used on
@@ -52,22 +54,95 @@
     - chocolatey
     - software
 
-- hosts: computerlokaal:extra:technieklokaal
+- hosts: computerlokaal:extra:technieklokaal:new
   strategy: free
   tasks:
   - name: Remove software
     win_shell: |
-      $app = Get-WmiObject -Class Win32_Product -Filter "Name = '{{ item }}'"
-      If ($app) {
-        $app.Uninstall()
+      $changed = $false
+      $apps = Get-WmiObject -Class Win32_Product | Where-Object {
+        $_.Name -like "{{item}}"
       }
+
+      if ($apps.Count -eq 0) {
+        Write-Host "No package found named '{{ item }}'"
+        exit 0
+      }
+
+      ForEach ($app in $apps) {
+        Write-Host "DEBUG: $app"
+        Try {
+          $app.Uninstall()
+          $changed = $true
+          Write-Host "Successfully uninstalled app '${$app.Name}"
+        } Catch {
+          Write-Host "Error: ${$_.Exception.Messsage}"
+          exit 2
+        }
+      }
+
+      if ($changed) {
+        exit 1
+      }
+
+      exit 0
+
     with_items:
     - Adobe AIR
+    - Adobe Flash Player 10 ActiveX
     - Acrobat Reader X
     - Lenovo Solution Center
     - SDK Debuggers
+    # Lenovo laptops
+    - Absolute Reminder
+    - Alcor Micro Smart Card Reader Driver
+    - Corel WinDVD
+    - Google Toolbar for Internet Explorer
+    - Integrated Camera
+    #- Intel(R) PROSet/Wireless Driver
+    #- Intel(R) PROSet/Wireless Software for Bluetooth(R)*
+    - Intel(R) Smart Connect Technology 4.1 x64
+    - Intel(R) WiDi
+    - Inst5676
+    - Lenovo Auto Scroll Utility
+    - Lenovo Mobile Broadband Activation
+    - Lenovo Power Management Driver
+    - Lenovo QuickCast
+    - Lenovo QuickControl
+    - Lenovo User Guide
+    - Lenovo Welcome
+    - Message Center Plus
+    #- Microsoft Visual C++ *
+    #- Intel® PROSet/Wireless WiFi Software
+    - Intel(R) SDK for OpenCL*
+    - Intel(R) USB 3.0*
+    - Mobile Broadband Drivers
+    - Nitro Pro 8
+    - Norton Internet Security
+    - On Screen Display
+    - Realtek Card Reader
+    - Realtek High Definition Audio Driver
+    - Registry Patch to Enable Maximum Power Saving*
+    - Stuurprogramma voor Intel® Graphics*
+    - SugarSync Manager
+    - Thinkpad UltraNav Driver
+    - ThinkVantage Access Connections
+    - ThinkVantage Active Protection System
+    - ThinkVantage Communications Utility
+    - ThinkVantage AutoLock
+    - Thinkpad UltraNav Utility
+    - Thinkpad UltraNav DriverA
+    - Thinkpad Modem Adapter
+    - Validity WBF DDK 5011
+    - VIPAccess
+    - Windows Driver Package *
+    - Windows Live Mesh *
+    register: this
+    failed_when: this.rc > 1
+    changed_when: this.rc == 1
     tags:
     - windows
+    - purge
 
 #  - name: Disable Windows Features
 #    win_feature:
