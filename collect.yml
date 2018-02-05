@@ -6,16 +6,59 @@
 - hosts: computers
   gather_facts: no
 
-  vars:
-      macaddress: '{{ ansible_interfaces[0].macaddress|default(mac|default("")) }}'
-
   tasks:
-  - name: Update facts cache
-    setup:
+  - name: Collect hardware info
+    when: use_cache is not defined
+    block:
+    - name: Update facts cache
+      setup:
+
+    - name: Update product info
+      win_product_facts:
+      when: use_cache is not defined
+
+    - name: Update disk info
+      win_disk_facts:
+      when: use_cache is not defined
 
   - name: Create CSV log entry
     set_fact:
-      csv_entry: '{{ ansible_date_time.date }} {{ ansible_date_time.time }};{{ ansible_hostname|upper }};{{ ansible_system_description }};{{ ansible_fqdn }};{{ ansible_os_name }};{{ ansible_distribution_version }};{{ ansible_architecture }};{{ macaddress|upper }};{{ ansible_ip_addresses[0] }};{{ ansible_processor[1] }};{{ (ansible_memtotal_mb/1024)|round|int }}GB;"{{ ansible_system_vendor }}";{{ ansible_product_name }};{{ ansible_product_serial }};{{ ansible_lastboot }};{{ ansible_win_rm_certificate_expires }};'
+      csv_entry: >-
+        "{{ ansible_date_time.date }} {{ ansible_date_time.time }}";
+        "{{ ansible_hostname|upper }}";
+        "{{ ansible_system_description }}";
+        "{{ ansible_fqdn }}";
+        "{{ ansible_os_name }}";
+        "{{ ansible_distribution_version }}";
+        "{{ ansible_architecture }}";
+        "{{ (ansible_interfaces|first).macaddress|default(mac|default(''))|upper }}";
+        "{{ ansible_ip_addresses|first }}";
+        "{{ ansible_processor[1] }}";
+        "{{ (ansible_memtotal_mb/1024)|round|int }}GB";
+        "{{ disk.bus_type }}";
+        "{{ disk.media_type }}";
+        "{{ disk.model }}";
+        "{{ (disk.size/1000|pow(3))|round|int }}GB";
+        "{{ disk.firmware_version }}";
+        "{{ ansible_system_vendor }}";
+        "{{ ansible_product_name }}";
+        "{{ ansible_product_serial }}";
+        "{{ ansible_bios_version }}";
+        "{{ ansible_bios_date }}";
+        "{{ ansible_os_product_id|default('') }}";
+        "{{ ansible_os_product_key|default('') }}";
+        "{{ ansible_lastboot }}";
+        "{{ ansible_win_rm_certificate_expires }}";
+    vars:
+      unknown_disks:  # Stub disk to avoid errors/workarounds
+      - system_disk: yes
+        physical_disk:
+          bus_type: ''
+          media_type: ''
+          model: ''
+          size: 0
+          firmware_version: ''
+      disk: '{{ (ansible_facts.disks|default(unknown_disks)|selectattr("system_disk")|first).physical_disk }}'
 
 - hosts: computers
   serial: 1
@@ -23,7 +66,7 @@
   - name: Add or update changes to systems.csv
     lineinfile:
       line: '{{ csv_entry }}'
-      regexp: ';{{ ansible_hostname|upper }};'
+      regexp: '; "{{ ansible_hostname|upper }}";'
       dest: /home/dag/home-made/crombeen/systems.csv
       state: present
       create: yes
