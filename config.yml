@@ -51,13 +51,7 @@
 #    until: job_result.finished
 #    retries: 30
 
-#  - name: Set Belgian keyboard
-#    win_psexec:
-#      command: powershell.exe -ExecutionPolicy Bypass -Command "Set-WinUserLanguageList -LanguageList nl-BE"
-#      interactive: yes
-#    tags: keyboard
-
-  - name: Registry configuration
+  - name: Registry configuration for ictadmin
     win_regedit:
       path: '{{ item.path }}'
       name: '{{ item.name }}'
@@ -66,23 +60,25 @@
       state: '{{ item.state|default("present") }}'
     with_items:
 
-    # Network configuration
-#    - path: HKLM:\System\ControlSet001\Control\ComputerName\ActiveComputerName
-#      name: ComputerName
-#      data: '{{ inventory_hostname_short|lower }}'
-#      type: string
-#    - path: HKLM:\System\ControlSet001\Control\ComputerName\ComputerName
-#      name: ComputerName
-#      data: '{{ inventory_hostname_short|lower }}'
-#      type: string
-#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-#      name: HostName
-#      data: '{{ inventory_hostname_short|lower }}'
-#      type: string
-#    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
-#      name: NV HostName
-#      data: '{{ inventory_hostname_short|lower }}'
-#      type: string
+    # Hostname configuration
+    - path: HKLM:\System\ControlSet001\Control\ComputerName\ActiveComputerName
+      name: ComputerName
+      data: '{{ inventory_hostname_short|lower }}'
+      type: string
+    - path: HKLM:\System\ControlSet001\Control\ComputerName\ComputerName
+      name: ComputerName
+      data: '{{ inventory_hostname_short|lower }}'
+      type: string
+    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      name: NV HostName
+      data: '{{ inventory_hostname_short|lower }}'
+      type: string
+    - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
+      name: HostName
+      data: '{{ inventory_hostname_short|lower }}'
+      type: string
+
+    # Domain configuration
     - path: HKLM:\System\ControlSet001\Services\Tcpip\Parameters
       name: Domain
       data: crombeen.internal
@@ -91,10 +87,17 @@
       name: NV Domain
       data: crombeen.internal
       type: string
+
+    # Server description
     - path: HKLM:\System\ControlSet001\Services\LanmanServer\Parameters
       name: SrvComment
       data: '{{ owner }}{{ " ("~role|title~")" if role is defined else "" }}{{ "" if type in [ "desktop"] else " ("~type|title~")" }}{{ " (Extra)" if "extra" in group_names else "" }} ({{ room }})'
       type: string
+
+    # Disable empty-password restrictions
+    - path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+      name: LimitBlankPasswordUse
+      data: 0
 
     # Disable all apps from Windows Store
     - path: HKLM:\Software\Policies\Microsoft\WindowsStore
@@ -128,15 +131,15 @@
     - path: HKU:\.DEFAULT\Keyboard Layout\Toggle
       name: Hotkey
       data: 3
-#    - path: HKCU:\Keyboard Layout\Toggle
-#      name: Language Hotkey
-#      data: 3
-#    - path: HKCU:\Keyboard Layout\Toggle
-#      name: Layout Hotkey
-#      data: 3
-#    - path: HKCU:\Keyboard Layout\Toggle
-#      name: Hotkey
-#      data: 3
+    - path: HKCU:\Keyboard Layout\Toggle
+      name: Language Hotkey
+      data: 3
+    - path: HKCU:\Keyboard Layout\Toggle
+      name: Layout Hotkey
+      data: 3
+    - path: HKCU:\Keyboard Layout\Toggle
+      name: Hotkey
+      data: 3
 
     - path: HKCU:\Control Panel\Desktop
       name: PreferredUILanguages
@@ -185,6 +188,36 @@
       name: ShowSuperHidden
       data: 2
 
+    # Remove Homegroup from Explorer
+    - path: HKLM:\SOFTWARE\Classes\{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}
+      name: System.IsPinnedToNameSpaceTree
+      data: 0
+
+    # Prevent "Suggested Applications" to return
+    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent
+      name: DisableWindowsConsumerFeatures
+      data: 1
+
+    # Disable Cortana (Windows 10 Anniversary+)
+    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
+      name: AllowCortana
+      data: 0
+
+    # Disable Microsoft Telemetry
+    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection
+      name: AllowTelemetry
+      data: 0
+
+    # Disable Game DVR and Game Bar
+    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR
+      name: AllowgameDVR
+      data: 0
+
+    # Enable lock timeout settings
+#    - path: HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\7516b95f-f776-4464-8c53-06167f40cc99\8EC4B3A5-6868-48c2-BE75-4F3044BE88A7
+#      name: Attributes
+#      data: 2
+
     # Do not show notifications/adverts (OneDrive & new features) in Windows Explorer
     - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
       name: ShowSyncProviderNotifications
@@ -195,44 +228,166 @@
       name: Start_SearchFiles
       data: 1
 
-    # Remove Homegroup from Explorer
-    - path: HKLM:\SOFTWARE\Classes\{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}
-      name: System.IsPinnedToNameSpaceTree
-      data: 0
-
-    # Prevent "Suggested Applications" to return
-    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Cloud Content
-      name: DisableWindowsConsumerFeatures
+    # Disable desktop trash bin
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel
+      name: '{645FF040-5081-101B-9F08-00AA002F954E}'
       data: 1
 
-    # Disable Cortana (Windows 10 Anniversary+)
-    - path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
-      name: AllowCortana
+    # Disable task view button in taskbar
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: ShowTaskViewButton
       data: 0
 
-    # Enable lock timeout settings
-#    - path: HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\7516b95f-f776-4464-8c53-06167f40cc99\8EC4B3A5-6868-48c2-BE75-4F3044BE88A7
-#      name: Attributes
-#      data: 2
+    # Disable people button in taskbar
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People
+      name: PeopleBand
+      data: 0
+
+    # Show all tray icons
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
+      name: EnableAutoTray
+      data: 0
 
     tags: registry
 
-  - name: Set default system locale to nl-BE
-    win_shell: |
-      New-WinUserLanguageList -Language nl-BE
-      Set-Culture nl-BE
-      Set-WinSystemLocale nl-BE
-      Set-WinHomeLocation -GeoId 21
-      Set-WinUserLanguageList -LanguageList nl-BE -Force
+  - name: Registry configuration for user
+    win_regedit:
+#      hive: C:\Users\{{ user }}\NTUSER.DAT
+      path: '{{ item.path }}'
+      name: '{{ item.name }}'
+      data: '{{ item.data|default(None) }}'
+      type: '{{ item.type|default("dword") }}'
+      state: '{{ item.state|default("present") }}'
+    with_items:
 
-  - name: Set default system locale to nl-BE
-    win_shell: |
-      Set-Culture nl-BE
-      Set-WinSystemLocale nl-BE
-      Set-WinHomeLocation -GeoId 21
-      Set-WinUserLanguageList -LanguageList nl-BE -Force
+    # Disable Language Bar Hotkeys
+    - path: HKCU:\Keyboard Layout\Toggle
+      name: Language Hotkey
+      data: 3
+    - path: HKCU:\Keyboard Layout\Toggle
+      name: Layout Hotkey
+      data: 3
+    - path: HKCU:\Keyboard Layout\Toggle
+      name: Hotkey
+      data: 3
+
+    - path: HKCU:\Control Panel\Desktop
+      name: PreferredUILanguages
+      data: 'nl-BE'
+      type: multistring
+
+    # Show all folders in Explorer including Recycle Bin, Desktop, Control Panel
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: NavPaneShowAllFolders
+      data: 0
+
+    # Hide empty drives in My Computer folder
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: HideDrivesWithNoMedia
+      data: 0
+
+    # Do not hide file extensions
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: HideFileExt
+      data: 0
+
+    # Do not show notifications/adverts (OneDrive & new features) in Windows Explorer
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: ShowSyncProviderNotifications
+      data: 0
+
+    # Do not slow down search by including all public folders
+    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: Start_SearchFiles
+      data: 1
+
+    # Disable desktop trash bin
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel
+      name: '{645FF040-5081-101B-9F08-00AA002F954E}'
+      data: 1
+
+    # Disable task view button in taskbar
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+      name: ShowTaskViewButton
+      data: 0
+
+    # Disable people button in taskbar
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People
+      name: PeopleBand
+      data: 0
+
+    # Show all tray icons
+    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
+      name: EnableAutoTray
+      data: 0
+
+    # Disable and remove the Shut Down command (Leerling)
+#    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#      name: NoClose
+#      data: 1
+
+    # Disable changing wallpaper
+#    - path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop
+#      name: NoChangingWallPaper
+#      data: 1
+
+    # Disable Windows Remote UAC
+#    - path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+#      name: LocalAccountTokenFilterPolicy
+#      data: 1
+
+    # Enable Classic Shell
+#    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#      name: ClassicShell
+#      data: 1
+
+    # Enable connecting and disconnecting a LAN connection
+#    - path: HKCU:\Software\Policies\Microsoft\Windows\Network Connections
+#      name: NC_LanConnect
+#      data: 0
+
     become: yes
     become_user: '{{ user }}'
+    ignore_errors: yes
+    tags: registry
+
+  - name: Set Belgian keyboard (ictadmin)
+    win_shell: |
+      Set-Culture -CultureInfo nl-BE
+      Set-WinSystemLocale nl-BE
+      Set-WinHomeLocation -GeoId 21
+      Set-WinUILanguageOverride nl-BE
+      Set-WinUserLanguageList nl-BE -force
+      #$nl_BE = New-WinUserLanguageList -Language nl-BE
+      #$nl_BE.Remove("nl-NL")
+      #$nl_BE.Remove("en-US")
+      #$nl_BE[0].InputMethodTips.Clear()
+      #$nl_BE[0].InputMethodTips.Add('0813:00000813')
+      #Set-WinUserLanguageList -LanguageList $nl_BE -Force
+    tags: keyboard
+
+  - name: Set Belgian keyboard (System)
+    win_shell: |
+      Set-Culture -CultureInfo nl-BE
+      Set-WinSystemLocale nl-BE
+      Set-WinHomeLocation -GeoId 21
+      Set-WinUILanguageOverride nl-BE
+      Set-WinUserLanguageList nl-BE -force
+    become: yes
+    become_user: System
+    tags: keyboard
+
+  - name: Set Belgian keyboard ({{ user }})
+    win_shell: |
+      Set-Culture -CultureInfo nl-BE
+      Set-WinSystemLocale nl-BE
+      Set-WinHomeLocation -GeoId 21
+      Set-WinUILanguageOverride nl-BE
+      Set-WinUserLanguageList nl-BE -force
+    become: yes
+    become_user: '{{ user }}'
+    ignore_errors: yes
+    tags: keyboard
 
   - name: Configure hostname, domain and workgroup
     win_domain_membership:
@@ -250,12 +405,11 @@
     win_dns_client:
       adapter_names: '*'
       ipv4_addresses:
-      - 192.168.0.253
-      - 8.8.4.4
-      - 8.8.8.8
+      - 192.168.0.254
       - 195.238.2.21
       - 195.238.2.22
-      - 192.168.0.254
+      - 8.8.4.4
+      - 8.8.8.8
     tags: dns
 
   - name: Configure time zone
@@ -352,57 +506,19 @@
 #      powercfg.exe -h off
 #    tags: power
 
-- hosts: computerlokaal:extra:technieklokaal:computer53
-  gather_facts: no
-  tasks:
-  - name: Configuration
-    win_regedit:
-      path: '{{ item.path }}'
-      name: '{{ item.name }}'
-      data: '{{ item.data|default(None) }}'
-      type: '{{ item.type|default("dword") }}'
+  - name: Rename printer
+    win_shell: |
+      ( Get-Printer -Name "{{ item }}" ) -and ( Rename-Printer -Name "{{ item }}" -NewName "iR-ADV C7260" )
     with_items:
+    - Canon Printer
+    - Canon iR-ADV C7055/C7065 Class Driver
+    - Canon
 
-    # Disable Windows Remote UAC
-    - path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
-      name: LocalAccountTokenFilterPolicy
-      data: 1
-
-    # Disable and remove the Shut Down command (Leerling)
-#    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
-#      name: NoClose
-#      data: 1
-
-    # Disable changing wallpaper
-    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop
-      name: NoChangingWallPaper
-      data: 1
-
-    # Enable Classic Shell
-#    - path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
-#      name: ClassicShell
-#      data: 1
-
-    # Enable connecting and disconnecting a LAN connection
-#    - path: HKCU:\Software\Policies\Microsoft\Windows\Network Connections
-#      name: NC_LanConnect
-#      data: 0
-
-  - name: Set monitor timeout to 30 minutes
+  - name: Default to black-white printing ({{ user }}) for iR-ADV C7260
     win_shell: |
-      powercfg -change -monitor-timeout-ac 30
-    tags: power
-
-  - name: Set sleep timeout to 90 minutes
-    win_shell: |
-      powercfg -change -standby-timeout-ac 90
-    tags: power
-
-#  - name: Set lock timeout to 90 minutes
-#    win_shell: |
-#      powercfg.exe /SETACVALUEINDEX SCHEME_CURRENT SUB_VIDEO VIDEOCONLOCK 60
-#      powercfg.exe /SETACTIVE SCHEME_CURRENT
-#    tags: power
+      Set-PrintConfiguration -PrinterName "iR-ADV C7260" -Color $false -Confirm:$false
+#    become: yes
+#    become_user: '{{ user }}'
 
   - name: Disable default services
     win_service:
@@ -417,7 +533,7 @@
     - HomeGroupProvider                        # HomeGroup Provider
     - lfsvc                                    # Geolocation Service
     - MapsBroker                               # Downloaded Maps Manager
-    - NetTcpPortSharing                        # Net.Tcp Port Sharing Service
+    #- NetTcpPortSharing                        # Net.Tcp Port Sharing Service
     - RemoteAccess                             # Routing and Remote Access
     - RemoteRegistry                           # Remote Registry
     - SharedAccess                             # Internet Connection Sharing (ICS)
@@ -431,4 +547,40 @@
     - XblGameSave                              # Xbox Live Game Save Service
     - XboxNetApiSvc                            # Xbox Live Networking Service
     tags: services
+
+
+- hosts: computerlokaal:extra:technieklokaal:computer53
+  gather_facts: no
+  tasks:
+  - name: Set timeout (monitor: 30 mins, standby: 90 mins)
+    win_shell: |
+      powercfg.exe -change -monitor-timeout-ac 30
+      powercfg.exe -change -standby-timeout-ac 90
+    tags: power
+
+- hosts: smartboard
+  gather_facts: no
+  tasks:
+  - name: Set timeout (monitor: 0 mins, standby: 4 hrs)
+    win_shell: |
+      powercfg.exe -change -monitor-timeout-ac 0
+      powercfg.exe -change -standby-timeout-ac 240
+    tags: power
+
+- hosts: computers:!computerlokaal:!extra:!technieklokaal:!smartboard
+  gather_facts: no
+  tasks:
+  - name: Set timeout (monitor: 20 mins, standby: never)
+    win_shell: |
+      powercfg.exe -change -monitor-timeout-ac 20
+      powercfg.exe -change -standby-timeout-ac 0
+    when: type == 'laptop'
+    tags: power
+
+
+#  - name: Set lock timeout to 90 minutes
+#    win_shell: |
+#      powercfg.exe /SETACVALUEINDEX SCHEME_CURRENT SUB_VIDEO VIDEOCONLOCK 60
+#      powercfg.exe /SETACTIVE SCHEME_CURRENT
+#    tags: power
 
