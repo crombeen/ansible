@@ -38,11 +38,26 @@
       account_disabled: no
       account_locked: no
       groups: [ Gebruikers, Users ]
-      user_cannot_change_password: yes
+      user_cannot_change_password: '{{ True if user == "leerling" else False }}'
       password_expired: no
       password_never_expires: yes
       state: present
     when: user is defined
+
+  - name: Create local "{{ user2 }}" user
+    win_user:
+      fullname: '{{ "Leerling" if user2 == "leerling" else owner }}'
+      name: '{{ user2 }}'
+#      password: '1234'
+      description: '{{ owner }}{{ " ("~role|title~")" if role is defined else "" }}{{ "" if type in [ "desktop"] else " ("~type|title~")" }}{{ " (Extra)" if "extra" in group_names else "" }}'
+      account_disabled: no
+      account_locked: no
+      groups: [ Gebruikers, Users ]
+      user_cannot_change_password: '{{ True if user2 == "leerling" else False }}'
+      password_expired: no
+      password_never_expires: yes
+      state: present
+    when: user2 is defined
 
   - name: Remove local "gebruiker" user
     win_user:
