@@ -6,12 +6,12 @@
 
   - setup:
 
-  # This doesn't work for all systems :-/
   - name: Ensure we are on a private network
     win_shell: |
-      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias LAN-Verbinding
-      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias Ethernet
-    ignore_errors: yes
+      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "LAN-Verbinding" -ErrorAction SilentlyContinue) -or
+      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Local Area Connection" -ErrorAction SilentlyContinue) -or
+      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Ethernet" -ErrorAction SilentlyContinue)
+    tags: private
 
   # Only do this for non-Pro versions
   - name: Only run this for Home edition
