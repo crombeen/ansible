@@ -18,6 +18,23 @@
 - hosts: computers
   tasks:
 
+#  - name: Install PinnedItem
+#    win_psmodule:
+#      name: Pinneditem
+
+#  - name: Unpin all apps
+#    win_shell: |
+#      Get-PinnedItem -Type StartMenu | Remove-PinnedItem
+#
+#      Install-Module -Name PinnedItem
+#    become: yes
+#    vars:
+#      ansible_become_user: '{{ user }}'
+#      become_user: '{{ user }}'
+#      ansible_become_password: ''
+#      become_password: ''
+
+      #Get-PinnedItem -Type StartMenu | Where {$_.Name -eq 'Snipping Tool'} | Remove-PinnedItem
 #  - name: Clean up Downloads
 #    win_cleanup:
 #      items:
@@ -30,6 +47,61 @@
 #      downloads: yes
 #      temp: yes
 #    tags: cleanup
+
+#  - name: Unpin all apps
+#    win_shell: |
+#      foreach ($item in (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items()) {
+#        foreach ($verb in $item.Verbs()) {
+#          Write-Host "Verb $($verb.Name) -- App $($item.Name)"
+#          if ($verb.Name -match 'Van Start &losmaken|Van taa&kbalk losmaken') {
+#            $verb.DoIt()
+#            Write-Host "App $($item.Name) Verb $($verb.Name)"
+#          }
+#        }
+#      }
+
+#      function Unpin($app) {
+#        try {
+#          foreach ($item in (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items()) {
+#            if ($item.Name -eq $app) {
+#              foreach ($verb in $item.Verbs()) {
+#                if ($verb.Name.replace('&','') -match 'Van "Start" losmaken|Von "Start" lösen|Unpin from Start') {
+#                    $verb.DoIt()
+#                }
+#              }
+#            }
+#          }
+#        } catch {
+#          Write-Error "Error Pinning/Unpinning App! (App-Name correct?)"
+#        }
+#      }
+#
+#      Unpin "Mail"
+#      Unpin "Store"
+#      Unpin "Calendar"
+#      Unpin "Microsoft Edge"
+#      Unpin "Photos"
+#      Unpin "Cortana"
+#      Unpin "Weather"
+#      Unpin "Phone Companion"
+#      Unpin "Twitter"
+#      Unpin "Skype Video"
+#      Unpin "Candy Crush Soda Saga"
+#      Unpin "xbox"
+#      Unpin "Groove music"
+#      Unpin "movies & tv"
+#      Unpin "microsoft solitaire collection"
+#      Unpin "money"
+#      Unpin "get office"
+#      Unpin "onenote"
+#      Unpin "news"
+#    become: yes
+#    vars:
+#      ansible_become_user: '{{ user }}'
+#      become_user: '{{ user }}'
+#      ansible_become_password: ''
+#      become_password: ''
+#    tags: tiles
 
   - name: Add shortcut icons
     win_copy:
@@ -97,10 +169,6 @@
       src: \\diskstation01\ictadmin
       dest: Desktop\ictadmin.lnk
       icon: '%SystemRoot%\System32\imageres.dll,117'
-    - desc: Mijn Documenten
-      src: '%UserProfile%\Documents'
-      dest: '%Public%\Desktop\Documenten.lnk'
-      icon: ',0'
     - desc: Prullenbak
       src: shell:RecycleBinFolder
       dest: '%Public%\Desktop\Prullenbak.lnk'
@@ -156,6 +224,7 @@
     - C:\Users\{{ user }}\Desktop\WinDirStat.lnk
     - '%Public%\Desktop\Audacity.lnk'
     - '%Public%\Desktop\CDex.lnk'
+    - '%Public%\Desktop\Firefox.lnk'
     - '%Public%\Desktop\Google Chrome.lnk'
     - '%Public%\Desktop\Google Earth.lnk'
     - '%Public%\Desktop\Inkscape.lnk'
@@ -166,6 +235,7 @@
     - '%Public%\Desktop\LibreOffice 5.1.lnk'
     - '%Public%\Desktop\LibreOffice 5.2.lnk'
     - '%Public%\Desktop\LibreOffice 5.3.lnk'
+    - '%Public%\Desktop\LibreOffice 5.4.lnk'
     - '%Public%\Desktop\Mozilla Firefox.lnk'
     - '%Public%\Desktop\VLC media player.lnk'
     - '%Public%\Desktop\Google Drive File Stream.lnk'
@@ -184,21 +254,17 @@
     - cleanup
     - docs
 
-  - name: Add Music/Video shortcuts
+  - name: Add shortcuts
     win_shortcut:
       desc: '{{ item.desc }}'
       src: '{{ item.src }}'
       dest: '{{ item.dest }}'
-      icon: '%SystemRoot%\System32\imageres.dll,{{ item.idx }}'
+      icon: '{{ item.icon|default(item.src ~ ",0") }}'
     with_items:
-    - desc: Gedeelde muziek bestanden
-      dest: Desktop\Muziek.lnk
-      src: \\diskstation01\music
-      idx: 103
-    - desc: Gedeelde video bestanden
-      dest: Desktop\Video.lnk
-      src: \\diskstation01\video
-      idx: 178
+    - desc: Mijn Documenten
+      src: '%UserProfile%\Documents'
+      dest: '%Public%\Desktop\Documenten.lnk'
+      icon: ',0'
     ignore_errors: yes
     tags:
     - shares
@@ -223,6 +289,17 @@
       idx: 178
     ignore_errors: yes
     tags:
+    - shares
+    - shortcuts
+
+  - name: Remove shortcuts
+    win_shortcut:
+      dest: '{{ item.dest }}'
+      state: absent
+    with_items:
+    - dest: '%Public%\Desktop\Documenten.lnk'
+    tags:
+    - clean
     - shares
     - shortcuts
 
