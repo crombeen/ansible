@@ -11,12 +11,14 @@
     win_chocolatey:
       name: powershell
       state: present
+      execution_timeout: 0
     tags: powershell
 
   - name: Install extra software
     win_chocolatey:
       name: '{{ item }}'
       state: present
+      execution_timeout: 0
     with_items:
     - 7zip
     - audacity
@@ -41,20 +43,22 @@
     - adblockplusie
     - adblockpluschrome
     tags: software
+    ignore_errors: yes
 
-- hosts: klaslokaal:beheer
-  tasks:
   - name: Install Google Drive File Stream
     win_chocolatey:
       name: google-drive-file-stream
       state: present
+      execution_timeout: 0
       ignore_checksums: yes
     tags: gdrive
 
-- hosts: computer26:computer41:computer48
+# TODO: Remove dropbox from systems
+- hosts: dropbox
   tasks:
   - name: Install dropbox
     win_chocolatey:
       name: dropbox
       state: latest
+      execution_timeout: 0
   tags: dropbox
