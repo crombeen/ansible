@@ -1,0 +1,7 @@
+- hosts: computers
+  gather_facts: no
+  tasks:
+  - win_reboot:
+#    when: false
+
+  - wait_for_connection:
