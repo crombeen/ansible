@@ -6,9 +6,12 @@
 
   - name: Ensure we are on a private network
     win_shell: |
-      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "LAN-Verbinding" -ErrorAction SilentlyContinue) -or
-      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Local Area Connection" -ErrorAction SilentlyContinue) -or
-      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Ethernet" -ErrorAction SilentlyContinue)
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "LAN-Verbinding" -ErrorAction SilentlyContinue
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Local Area Connection" -ErrorAction SilentlyContinue
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Ethernet" -ErrorAction SilentlyContinue
+      Set-NetConnectionProfile -NetwerkCategory Private -InterfaceAlias "Draadloze netwerkverbinding" -ErrorAction SilentlyContinu
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Wi-Fi" -ErrorAction SilentlyContinue
+    ignore_errors: yes
     tags: private
 
 #  - name: Download VNC Connect
@@ -72,5 +75,6 @@
       name: TigerVNC
       startmode: auto
       state: restarted
+      force: yes
       force_dependent_services: yes
     tags: service
