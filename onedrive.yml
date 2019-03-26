@@ -1,4 +1,4 @@
-- hosts: all:!netwerk:!wifi:!computer08:!computer23:!computer48:!computer60
+- hosts: computers
   gather_facts: no
   tasks:
   - name: Configuration
@@ -70,5 +70,5 @@
     - '%LOCALAPPDATA%\Microsoft\OneDrive'
     - '%PROGRAMDATA%\Microsoft OneDrive'
     - '%USERPROFILE%\OneDrive'
-    - 'C:\OneDriveTemp'
     - '%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk'
+    - C:\OneDriveTemp
