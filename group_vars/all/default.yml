@@ -1,20 +1,19 @@
-#ansible_connection: winrm
 ansible_connection: psrp
+#ansible_connection: psrp
 #ansible_port: 5986
 ansible_user: ictadmin
 ansible_password: '{{ ansible_winrm_password }}'
 
 ansible_psrp_auth: credssp
-#ansible_psrp_auth: basic
+#ansible_psrp_auth: ntlm
 ansible_psrp_cert_validation: ignore
-ansible_psrp_credssp_disable_tlsv1_2: yes
-ansible_psrp_operation_timeout: 30
-ansible_psrp_connection_timeout: 31
-ansible_psrp_read_timeout: 1800
+ansible_psrp_operation_timeout: 7
+ansible_psrp_connection_timeout: 8
+ansible_psrp_read_timeout: 32
+ansible_psrp_reconnection_retries: 2
 
 ansible_winrm_scheme: https
 ansible_winrm_server_cert_validation: ignore
-#ansible_winrm_credssp_disable_tlsv1_2: yes
 #ansible_winrm_transport: credssp,ssl,plaintext
 ansible_winrm_transport: credssp
 #ansible_winrm_transport: ssl
@@ -22,10 +21,10 @@ ansible_winrm_transport: credssp
 #ansible_winrm_transport: certificate
 #ansible_winrm_transport: ntlm
 #ansible_winrm_user: ictadmin
+#ansible_winrm_operation_timeout_sec: 32
 ansible_winrm_operation_timeout_sec: 1200
-#ansible_winrm_operation_timeout_sec: 30
+#ansible_winrm_read_timeout_sec: 33
 ansible_winrm_read_timeout_sec: 1800
-#ansible_winrm_read_timeout_sec: 31
 
 #ansible_winrm_cert_pem: /home/dag/home-made/crombeen/certs/winrm_client_cert.pub.pem
 #ansible_winrm_cert_key_pem: /home/dag/home-made/crombeen/certs/winrm_client_cert.prv.pem
