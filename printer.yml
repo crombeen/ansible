@@ -2,37 +2,39 @@
   gather_facts: no
 
   vars:
-#    old_names:
-#    - Canon iR-ADV C7055/C7065 Class Driver
-#    - Canon Printer
-#    - Canon
-    new_name: iR-ADV C7260
+    old_names:
+    - Canon Printer
+    - Canon iR-ADV C7055/C7065 Class Driver
+    - Canon
+    - iR-ADV C7260
+    new_name: iR-ADV C7260 (Crombeen)
 
   tasks:
-#  - win_shell: |
-#      ( Get-Printer -Name "{{ item }}" ) -and ( Rename-Printer -Name "{{ item }}" -NewName "{{ new_name }}" )
-#    with_items: '{{ old_names }}'
+  - name: Install printer driver
+    win_shell: |
+      Set-Location -Path "\\diskstation01.crombeen.internal\ictadmin\Hardware\Printer\Canon iR ADVANCE\PCL6_Driver_V2185_32_64_NL_07\x64\Driver"
+      PNPUtil.exe /add-driver CNP60HA64.INF /install
+    register: driver
+    changed_when: "'Added driver packages:  1' in driver.stdout"
+    failed_when: "'Driver package added successfully.' not in driver.stdout"
 
-  # Admin
-  - win_shell: |
+  - name: Create printer
+    win_shell: |
+      Add-PrinterPort -Name "IP_192.168.0.40" -PrinterHostAddress "printer01.crombeen.internal" -PortNumber 9100 -ErrorAction SilentlyContinue
+      Add-PrinterDriver -Name "Canon iR-ADV C7260/7270 PCL6" -ErrorAction SilentlyContinue
+      Add-Printer -Name "iR-ADV C7260 (Crombeen)" -DriverName "Canon iR-ADV C7260/7270 PCL6" -Port "IP_192.168.0.40" -ErrorAction Silently
+    register: printer01
+    failed_when: no
+    changed_when: printer01.rc == 0
+
+  - name: Rename printer
+    win_shell: |
+      ( Get-Printer -Name "{{ item }}" ) -and ( Rename-Printer -Name "{{ item }}" -NewName "{{ new_name }}" )
+    with_items: '{{ old_names }}'
+
+  - name: Default to black-white printing ({{ user }}) for {{ new_name }}
+    win_shell: |
       Set-PrintConfiguration -PrinterName "{{ new_name }}" -Color $false -Confirm:$false
-    register: printer_admin
-
-  # User
-  - win_shell: |
-      Set-PrintConfiguration -PrinterName "{{ new_name }}" -Color $false -Confirm:$false
-    register: printer_user
-    become: '{{ user }}'
-
-  # Failure
-  - win_shell: |
-      Get-Printer
-    when:
-    - printer_admin|failed
-    - printer_user|failed
-
-  - fail:
-      msg: "Could not set printer settings."
-    when:
-    - printer_admin|failed
-    - printer_user|failed
+#    ignore_errors: yes
+#    become: yes
+#    become_user: '{{ user }}'
