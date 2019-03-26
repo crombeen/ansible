@@ -1,6 +1,10 @@
 hosts.ini
 group_vars/all/passwords.yml
+inventory.ini
 library/
+files/
 test/
 *.pyc
 *.retry
+test*
+*.csv

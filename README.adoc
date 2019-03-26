@@ -5,7 +5,9 @@ As part of this project the following modules have been implemented:
 - wakeonlan
 - wait_for_connection
 - win_defrag
+- win_product_facts
 - win_shortcut
+- win_wakeonlan
 
 
 == Configuring the system for Powershell Remoting
@@ -67,15 +69,20 @@ The following things we can manage using Ansible today:
    * Setting up International(ization) and Keyboard Layout
  - Customize desktop icons
  - Defragment filesystem(s)
+ - Install printer drivers and configure printers
 
 Still need to be implement:
 
  * Missing automation
-   - Customize start menu
-   - Customize task bar
+   - Customize start menu (disable tiles, change start menu settings)
+   - Customize task bar (pinning apps in task bar in specific order)
    - Customize system tray
+   - Customize desktop icons (position desktop icons)
  * Missing facts
-   - Disk information (size, free-space)
+   - Disk information (size, free-space) using **win_disk_facts**
+ * Security
+   - Limit headphone loudness for children
+   - Run applications as another user with unknown password *(should be possible now)*
 
 
 == Instructions
@@ -94,12 +101,10 @@ Existing Ansible playbooks are available from: https://github.com/crombeen/ansib
 
 == Manage system configuration
     $ ansible-playbook -k config.yml
+    $ ansible-playbook -k desktop.yml
 
 === Manage local users
     $ ansible-playbook -k users.yml
-
-=== Manage desktop
-    $ ansible-playbook -k desktop.yml
 
 === Manage RDP and OneDrive
     $ ansible-playbook -k rdesktop.yml
@@ -121,6 +126,8 @@ Here is a list of problems today:
  - Powershell is a big improvement over cmd.exe, however it feels like Perl 4 (1993) more than anything modern (encountered various inconsistencies and design issues).
 
  - Since we have Windows 10 Home OEM licenses, Microsoft's solution (Active Directory and Group Policies) is not an option, and we prefer open tooling and manageable actions.
+
+ - Microsoft disables WinRM on every Windows 10 upgrade (every 6 months)
 
 
 == Resources
