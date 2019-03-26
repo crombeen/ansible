@@ -8,9 +8,12 @@
 
   - name: Ensure we are on a private network
     win_shell: |
-      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "LAN-Verbinding" -ErrorAction SilentlyContinue) -or
-      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Local Area Connection" -ErrorAction SilentlyContinue) -or
-      (Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Ethernet" -ErrorAction SilentlyContinue)
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "LAN-Verbinding" -ErrorAction SilentlyContinue
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Local Area Connection" -ErrorAction SilentlyContinue
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Ethernet" -ErrorAction SilentlyContinue
+      Set-NetConnectionProfile -NetwerkCategory Private -InterfaceAlias "Draadloze netwerkverbinding" -ErrorAction SilentlyContinu
+      Set-NetConnectionProfile -NetworkCategory Private -InterfaceAlias "Wi-Fi" -ErrorAction SilentlyContinue
+    ignore_errors: yes
     tags: private
 
   # Only do this for non-Pro versions
@@ -82,7 +85,7 @@
       profiles: private
       state: present
       enabled: yes
-    ignore_errors: yes
+    #ignore_errors: yes
     register: fw
     tags: firewall
 
@@ -130,8 +133,10 @@
   - name: Ensure Terminal Services is running
     win_service:
       name: TermService
+      startmode: auto
       state: started
       force: yes
+      force_dependent_services: yes
     tags: service
 
    # Reboot is not required
