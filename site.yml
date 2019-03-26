@@ -2,8 +2,10 @@
 - import_playbook: wakeonlan.yml
 - import_playbook: collect.yml
 - import_playbook: rdesktop.yml
-- import_playbook: config.yml
-- import_playbook: onedrive.yml
+- import_playbook: tigervnc.yml
+- import_playbook: sshd.yml
 - import_playbook: users.yml
 - import_playbook: software.yml
+- import_playbook: config.yml
 - import_playbook: desktop.yml
+- import_playbook: onedrive.yml
